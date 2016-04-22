@@ -3,9 +3,9 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package com.sensor.wohnzimmer;
+package com.sensor.soundintensity;
 
-import com.tinkerforge.BrickletDistanceIR;
+import com.tinkerforge.BrickletSoundIntensity;
 import com.tinkerforge.IPConnection;
 import com.communication.MQTTCommunication;
 import com.communication.MQTTParameters;
@@ -19,12 +19,12 @@ import org.eclipse.paho.client.mqttv3.MqttMessage;
  *
  * @author Turna
  */
-public class ServiceDistanceIRWohnzimmer implements MqttCallback{
+public class ServiceSoundIntensity implements MqttCallback {
 
-    public final static String CLIENT_ID="Wohnzimmer001";
-    
-    public final static String BASE_TOPIC = "Service";
-    public final static String STATUS_TOPIC = BASE_TOPIC + "/status";
+    public final static String SENSOR_TYP = "Sound Intensity"; 
+    public final static String CLIENT_ID = "SI_01";
+    public final static String BASE_SENSOR_ID = "/"+CLIENT_ID;
+    public final static String STATUS_TOPIC = SENSOR_TYP + BASE_SENSOR_ID + "/status";
     
     public final static String STATUS_TOPIC_CONNECTION = STATUS_TOPIC + "/connection";
     public final static String STATUS_CONNECTION_OFFLINE="offline";
@@ -34,9 +34,9 @@ public class ServiceDistanceIRWohnzimmer implements MqttCallback{
     
         private static final String HOST = "localhost";
 	private static final int PORT = 4223;
-	private static final String UID = "qt4"; // Change to your UID
+	private static final String UID = "mnn"; // Change to your UID
     
-     public ServiceDistanceIRWohnzimmer() throws MqttException {
+     public ServiceSoundIntensity() throws MqttException {
         communication = new MQTTCommunication();
         MQTTParameters parameters = new MQTTParameters();
         parameters.setClientID(CLIENT_ID);
@@ -49,7 +49,7 @@ public class ServiceDistanceIRWohnzimmer implements MqttCallback{
         parameters.setMqttCallback(this);
         communication.connect(parameters);
         communication.publishActualWill(STATUS_CONNECTION_ONLINE.getBytes());
-        communication.subscribe(BASE_TOPIC+"/#", 0);
+        communication.subscribe(BASE_SENSOR_ID+"/#", 0);
 
     }
 
@@ -69,39 +69,37 @@ public class ServiceDistanceIRWohnzimmer implements MqttCallback{
     }
 
     
-    
-    
     // Note: To make the example code cleaner we do not handle exceptions. Exceptions
     //       you might normally want to catch are described in the documentation
     public static void main(String[] args) throws MqttException, Exception {
         
-        ServiceDistanceIRWohnzimmer service=new ServiceDistanceIRWohnzimmer();
+        ServiceSoundIntensity service=new ServiceSoundIntensity();
                 
         
                 IPConnection ipcon = new IPConnection(); // Create IP connection
-		BrickletDistanceIR dir = new BrickletDistanceIR(UID, ipcon); // Create device object
+		BrickletSoundIntensity si = new BrickletSoundIntensity(UID, ipcon); // Create device object
 
 		ipcon.connect(HOST, PORT); // Connect to brickd
 		// Don't use device before ipcon is connected
 
-		// Get threshold callbacks with a debounce time of 10 seconds (10000ms)
-		dir.setDebouncePeriod(500);
+		// Get threshold callbacks with a debounce time of 1 second (1000ms)
+		si.setDebouncePeriod(1000);
 
-		// Add distance reached listener (parameter has unit mm)
-		dir.addDistanceReachedListener(new BrickletDistanceIR.DistanceReachedListener() {
-			public void distanceReached(int distance) {
-				System.out.println("Distance: " + distance/10.0 + " cm");
+		// Add intensity reached listener
+		si.addIntensityReachedListener(new BrickletSoundIntensity.IntensityReachedListener() {
+			public void intensityReached(int intensity) {
+				System.out.println("Intensity: " + intensity);
                                 MqttMessage message=new MqttMessage();
-                                message.setPayload((""+distance/10.0).getBytes());
+                                message.setPayload((" " + intensity).getBytes());
                                 message.setRetained(true);
                                 message.setQos(0);
-                                communication.publish("Distanz", message);
+                                service.communication.publish(SENSOR_TYP+BASE_SENSOR_ID+"/Value: ", message);
+                                
 			}
 		});
 
-		// Configure threshold for distance "smaller than 30 cm" (unit is mm)
-		dir.setDistanceCallbackThreshold('<', 60*10, 0);
-                
+		// Configure threshold for intensity "greater than 2000"
+		si.setIntensityCallbackThreshold('>', 800, 0);
 
 		System.out.println("Press key to exit"); System.in.read();
 		ipcon.disconnect();
