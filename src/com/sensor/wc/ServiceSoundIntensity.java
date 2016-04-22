@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package com.sensor.SoundIntensity;
+package com.sensor.wc;
 
 import com.tinkerforge.BrickletSoundIntensity;
 import com.tinkerforge.IPConnection;
@@ -20,7 +20,7 @@ import org.eclipse.paho.client.mqttv3.MqttMessage;
  *
  * @author Turna
  */
-public class ServiceSound implements MqttCallback {
+public class ServiceSoundIntensity implements MqttCallback {
 
     public final static String CLIENT_ID="XYZ";
     
@@ -37,7 +37,7 @@ public class ServiceSound implements MqttCallback {
 	private static final int PORT = 4223;
 	private static final String UID = "mnn"; // Change to your UID
     
-     public ServiceSound() throws MqttException {
+     public ServiceSoundIntensity() throws MqttException {
         communication = new MQTTCommunication();
         MQTTParameters parameters = new MQTTParameters();
         parameters.setClientID(CLIENT_ID);
@@ -74,24 +74,27 @@ public class ServiceSound implements MqttCallback {
     //       you might normally want to catch are described in the documentation
     public static void main(String[] args) throws MqttException, Exception {
         
-        ServiceSound service=new ServiceSound();
-        IPConnection ipcon = new IPConnection(); // Create IP connection
+        ServiceSoundIntensity service=new ServiceSoundIntensity();
+                
+        
+                IPConnection ipcon = new IPConnection(); // Create IP connection
 		BrickletSoundIntensity si = new BrickletSoundIntensity(UID, ipcon); // Create device object
 
 		ipcon.connect(HOST, PORT); // Connect to brickd
 		// Don't use device before ipcon is connected
 
-		// Add intensity listener
-		si.addIntensityListener(new BrickletSoundIntensity.IntensityListener() {
-			public void intensity(int intensity) {
+		// Get threshold callbacks with a debounce time of 1 second (1000ms)
+		si.setDebouncePeriod(1000);
+
+		// Add intensity reached listener
+		si.addIntensityReachedListener(new BrickletSoundIntensity.IntensityReachedListener() {
+			public void intensityReached(int intensity) {
 				System.out.println("Intensity: " + intensity);
 			}
 		});
 
-		// Set period for intensity callback to 0.05s (50ms)
-		// Note: The intensity callback is only called every 0.05 seconds
-		//       if the intensity has changed since the last call!
-		si.setIntensityCallbackPeriod(50);
+		// Configure threshold for intensity "greater than 2000"
+		si.setIntensityCallbackThreshold('>', 800, 0);
 
 		System.out.println("Press key to exit"); System.in.read();
 		ipcon.disconnect();
