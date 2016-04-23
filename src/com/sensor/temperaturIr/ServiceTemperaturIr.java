@@ -32,7 +32,7 @@ public class ServiceTemperaturIr implements MqttCallback{
     
     private final MQTTCommunication communication;
     
-        private static final String HOST = "localhost";
+        private static final String HOST = "192.168.1.16";
 	private static final int PORT = 4223;
 	private static final String UID = "qCb"; // Change to your UID
     

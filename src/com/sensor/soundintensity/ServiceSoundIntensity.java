@@ -9,8 +9,10 @@ import com.tinkerforge.BrickletSoundIntensity;
 import com.tinkerforge.IPConnection;
 import com.communication.MQTTCommunication;
 import com.communication.MQTTParameters;
+import com.helpers.TimeWatch;
 
 import java.net.URI;
+import java.util.concurrent.TimeUnit;
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
 import org.eclipse.paho.client.mqttv3.MqttCallback;
 import org.eclipse.paho.client.mqttv3.MqttException;
@@ -32,7 +34,7 @@ public class ServiceSoundIntensity implements MqttCallback {
     
     private final MQTTCommunication communication;
     
-        private static final String HOST = "localhost";
+        private static final String HOST = "192.168.1.16";
 	private static final int PORT = 4223;
 	private static final String UID = "mnn"; // Change to your UID
     
@@ -51,6 +53,7 @@ public class ServiceSoundIntensity implements MqttCallback {
         communication.publishActualWill(STATUS_CONNECTION_ONLINE.getBytes());
         communication.subscribe(BASE_SENSOR_ID+"/#", 0);
 
+       
     }
 
     @Override
@@ -73,13 +76,15 @@ public class ServiceSoundIntensity implements MqttCallback {
     //       you might normally want to catch are described in the documentation
     public static void main(String[] args) throws MqttException, Exception {
         
+         
+        // New Service (Koenig)
         ServiceSoundIntensity service=new ServiceSoundIntensity();
-                
-        
-                IPConnection ipcon = new IPConnection(); // Create IP connection
-		BrickletSoundIntensity si = new BrickletSoundIntensity(UID, ipcon); // Create device object
+          
+        // TinkerForge Java Code
+        IPConnection ipcon = new IPConnection(); // Create IP connection
+        BrickletSoundIntensity si = new BrickletSoundIntensity(UID, ipcon); // Create device object
 
-		ipcon.connect(HOST, PORT); // Connect to brickd
+                ipcon.connect(HOST, PORT); // Connect to brickd
 		// Don't use device before ipcon is connected
 
 		// Get threshold callbacks with a debounce time of 1 second (1000ms)
@@ -87,22 +92,53 @@ public class ServiceSoundIntensity implements MqttCallback {
 
 		// Add intensity reached listener
 		si.addIntensityReachedListener(new BrickletSoundIntensity.IntensityReachedListener() {
-			public void intensityReached(int intensity) {
+		
+                                        
+                        public void intensityReached(int intensity) {
 				System.out.println("Intensity: " + intensity);
-                                MqttMessage message=new MqttMessage();
+                                
+                                
+                                try {
+                                MqttMessage message = new MqttMessage();
                                 message.setPayload((" " + intensity).getBytes());
                                 message.setRetained(true);
                                 message.setQos(0);
+                                
+                                // ***
+                                //MqttMessage alertMessage = new MqttMessage();
+                                //alertMessage.setPayload(("SEND A SMS & E-MAIL").getBytes());
+                                //alertMessage.setRetained(true);
+                                //alertMessage.setQos(0);
+                                // ***
+                              
+                                
+                                // Publish to the Broker
+                                // Publish message when intensity "greater than 800" <- DB Data
                                 service.communication.publish(SENSOR_TYP+BASE_SENSOR_ID+"/Value: ", message);
                                 
+                                // ***
+                                // Publish AlertMessage when intensity "greater than 800" and over 2 Minutes
+                                // service.communication.publish(SENSOR_TYP+BASE_SENSOR_ID+"/Alert: ", alertMessage);
+                                // ***
+                                                                                                                          
+                               
+                                // Subscribe via Broker from other Clients(publisher)
+                                service.communication.subscribe("Temperatur IR/TIR_01/Value: ", 0);
+                                
+                                }
+                                catch(Exception e){
+                                     e.printStackTrace();
+                                }
+                                      
 			}
 		});
 
-		// Configure threshold for intensity "greater than 2000"
+		// Configure threshold for intensity "greater than 800"
 		si.setIntensityCallbackThreshold('>', 800, 0);
 
 		System.out.println("Press key to exit"); System.in.read();
 		ipcon.disconnect();
     }
     
+  
 }
