@@ -1,6 +1,8 @@
+package com.helpers;
+
 import com.tinkerforge.IPConnection;
 
-public class ExampleEnumerate {
+public class EnumerateClients {
 	private static final String HOST = "localhost";
 	private static final int PORT = 4223;
 

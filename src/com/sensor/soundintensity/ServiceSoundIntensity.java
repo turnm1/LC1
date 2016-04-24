@@ -9,7 +9,8 @@ import com.tinkerforge.BrickletSoundIntensity;
 import com.tinkerforge.IPConnection;
 import com.communication.MQTTCommunication;
 import com.communication.MQTTParameters;
-import com.helpers.TimeWatch;
+import com.helpers.HostConnection;
+import com.sensor.temperaturIr.ServiceTemperaturIr;
 
 import java.net.URI;
 import java.util.concurrent.TimeUnit;
@@ -23,11 +24,16 @@ import org.eclipse.paho.client.mqttv3.MqttMessage;
  */
 public class ServiceSoundIntensity implements MqttCallback {
 
+    // Subscrib Pathways
+    private static  ServiceTemperaturIr stir;
+    private final static String SUBSCIRBE_SSI = stir.getTopic();
+    
+    // ServiceSoundIntensity Pathways
     public final static String SENSOR_TYP = "Sound Intensity"; 
     public final static String CLIENT_ID = "SI_01";
     public final static String BASE_SENSOR_ID = "/"+CLIENT_ID;
     public final static String STATUS_TOPIC = SENSOR_TYP + BASE_SENSOR_ID + "/status";
-    
+   
     public final static String STATUS_TOPIC_CONNECTION = STATUS_TOPIC + "/connection";
     public final static String STATUS_CONNECTION_OFFLINE="offline";
     public final static String STATUS_CONNECTION_ONLINE="online";
@@ -55,7 +61,14 @@ public class ServiceSoundIntensity implements MqttCallback {
 
        
     }
-
+    
+     // Get the Topic Pathway for SoundIntensity
+    public static String getTopic(){
+        String topicPath = SENSOR_TYP+BASE_SENSOR_ID+"/Value:";
+        return topicPath;
+    }
+    
+     
     @Override
     public void connectionLost(Throwable thrwbl) {
         System.out.println("Ouups, lost connection to subscirptions");
@@ -103,27 +116,15 @@ public class ServiceSoundIntensity implements MqttCallback {
                                 message.setPayload((" " + intensity).getBytes());
                                 message.setRetained(true);
                                 message.setQos(0);
-                                
-                                // ***
-                                //MqttMessage alertMessage = new MqttMessage();
-                                //alertMessage.setPayload(("SEND A SMS & E-MAIL").getBytes());
-                                //alertMessage.setRetained(true);
-                                //alertMessage.setQos(0);
-                                // ***
-                              
+                                                                                          
                                 
                                 // Publish to the Broker
                                 // Publish message when intensity "greater than 800" <- DB Data
                                 service.communication.publish(SENSOR_TYP+BASE_SENSOR_ID+"/Value: ", message);
-                                
-                                // ***
-                                // Publish AlertMessage when intensity "greater than 800" and over 2 Minutes
-                                // service.communication.publish(SENSOR_TYP+BASE_SENSOR_ID+"/Alert: ", alertMessage);
-                                // ***
-                                                                                                                          
-                               
+                                                                                                                                                                                        
+                                // FALSCHER ORT - ES MUSS EINE WEITERE METHODE EXISTIEREN MIT ZEITLICHER SUBSCRIBE! HIER WIRD NUR SUBSCRIBT, WENN EIN PUBLISH GEMACHT WIRD
                                 // Subscribe via Broker from other Clients(publisher)
-                                service.communication.subscribe("Temperatur IR/TIR_01/Value: ", 0);
+                                service.communication.subscribe(SUBSCIRBE_SSI, 0);
                                 
                                 }
                                 catch(Exception e){
@@ -134,7 +135,7 @@ public class ServiceSoundIntensity implements MqttCallback {
 		});
 
 		// Configure threshold for intensity "greater than 800"
-		si.setIntensityCallbackThreshold('>', 800, 0);
+		si.setIntensityCallbackThreshold('>', 1000, 0);
 
 		System.out.println("Press key to exit"); System.in.read();
 		ipcon.disconnect();

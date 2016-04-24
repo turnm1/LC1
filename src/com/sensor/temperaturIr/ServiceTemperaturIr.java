@@ -53,6 +53,12 @@ public class ServiceTemperaturIr implements MqttCallback{
 
     }
 
+       // Get the Topic Pathway for TemperaturIr
+    public static String getTopic(){
+       String topicPath = SENSOR_TYP+BASE_SENSOR_ID+"/Value:";
+       return topicPath;
+    }
+       
     @Override
     public void connectionLost(Throwable thrwbl) {
         System.out.println("Ouups, lost connection to subscirptions");
