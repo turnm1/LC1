@@ -9,6 +9,7 @@ import com.tinkerforge.BrickletTemperatureIR;
 import com.tinkerforge.IPConnection;
 import com.communication.MQTTCommunication;
 import com.communication.MQTTParameters;
+import com.helpers.DateInput;
 
 import java.net.URI;
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
@@ -32,7 +33,7 @@ public class ServiceTemperaturIr implements MqttCallback{
     
     private final MQTTCommunication communication;
     
-        private static final String HOST = "192.168.1.16";
+        private static final String HOST = "localhost";
 	private static final int PORT = 4223;
 	private static final String UID = "qCb"; // Change to your UID
     
@@ -50,6 +51,7 @@ public class ServiceTemperaturIr implements MqttCallback{
         communication.connect(parameters);
         communication.publishActualWill(STATUS_CONNECTION_ONLINE.getBytes());
         communication.subscribe(BASE_SENSOR_ID+"/#", 0);
+        parameters.getLastWillMessage();
 
     }
 
@@ -90,22 +92,33 @@ public class ServiceTemperaturIr implements MqttCallback{
 		ipcon.connect(HOST, PORT); // Connect to brickd
 		// Don't use device before ipcon is connected
 
-		// Add object temperature listener (parameter has unit °C/10)
-		tir.addObjectTemperatureListener(new BrickletTemperatureIR.ObjectTemperatureListener() {
-			public void objectTemperature(short temperature) {
+		// Add object temperature reached listener (parameter has unit °C/10)
+		tir.addObjectTemperatureReachedListener(new BrickletTemperatureIR.ObjectTemperatureReachedListener() {
+			public void objectTemperatureReached(short temperature) {
 				System.out.println("Object Temperature: " + temperature/10.0 + " °C");
                                 MqttMessage message=new MqttMessage();
                                 message.setPayload((" " + temperature/10.0 + " °C").getBytes());
                                 message.setRetained(true);
                                 message.setQos(0);
                                 service.communication.publish(SENSOR_TYP+BASE_SENSOR_ID+"/Value: ", message);
+                                
+                                DateInput di = new DateInput();
+                                MqttMessage dateMessage = new MqttMessage();
+                                dateMessage.setPayload((di.getDate()).getBytes());
+                                dateMessage.setRetained(true);
+                                dateMessage.setQos(0);
+                                service.communication.publish(SENSOR_TYP+BASE_SENSOR_ID+"/Date: ", dateMessage);
 				}
 		});
 
-		// Set period for object temperature callback to 1s (1000ms)
-		// Note: The object temperature callback is only called every second
-		//       if the object temperature has changed since the last call!
-		tir.setObjectTemperatureCallbackPeriod(1000);
+		// Configure threshold for object temperature "greater than 100 °C" (unit is °C/10)
+		tir.setObjectTemperatureCallbackThreshold('>', (short)(10*10), (short)0);
+                
+                // Set emissivity to 0.98 (emissivity of water, 65535 * 0.98 = 64224.299)
+		tir.setEmissivity(64224);
+
+		// Get threshold callbacks with a debounce time of 10 seconds (10000ms)
+		tir.setDebouncePeriod(1000);
 
 		System.out.println("Press key to exit"); System.in.read();
 		ipcon.disconnect();

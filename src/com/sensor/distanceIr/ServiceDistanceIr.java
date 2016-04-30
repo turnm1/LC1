@@ -9,6 +9,7 @@ import com.tinkerforge.BrickletDistanceIR;
 import com.tinkerforge.IPConnection;
 import com.communication.MQTTCommunication;
 import com.communication.MQTTParameters;
+import com.helpers.DateInput;
 
 import java.net.URI;
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
@@ -50,6 +51,7 @@ public class ServiceDistanceIr implements MqttCallback{
         communication.connect(parameters);
         communication.publishActualWill(STATUS_CONNECTION_ONLINE.getBytes());
         communication.subscribe(BASE_SENSOR_ID+"/#", 0);
+        parameters.getLastWillMessage();
 
     }
 
@@ -90,18 +92,54 @@ public class ServiceDistanceIr implements MqttCallback{
 		// Add distance reached listener (parameter has unit mm)
 		dir.addDistanceReachedListener(new BrickletDistanceIR.DistanceReachedListener() {
 			public void distanceReached(int distance) {
-				System.out.println("Distance: " + distance/10.0 + " cm");
+				System.out.println("Passage Detected");
                                 MqttMessage message=new MqttMessage();
-                                message.setPayload((""+ distance/10.0 + " cm").getBytes());
+                                message.setPayload(("Passage Detected").getBytes());
                                 message.setRetained(true);
                                 message.setQos(0);
-                                service.communication.publish(SENSOR_TYP+BASE_SENSOR_ID+"/Value: ", message);
+                                service.communication.publish(SENSOR_TYP+BASE_SENSOR_ID+"/Passage: ", message);
+                                
+                                
+                                DateInput di = new DateInput();
+                                MqttMessage dateMessage = new MqttMessage();
+                                dateMessage.setPayload((di.getDate()).getBytes());
+                                dateMessage.setRetained(true);
+                                dateMessage.setQos(0);
+                                service.communication.publish(SENSOR_TYP+BASE_SENSOR_ID+"/Date: ", dateMessage);
 			}
 		});
-
-		// Configure threshold for distance "smaller than 30 cm" (unit is mm)
-		dir.setDistanceCallbackThreshold('<', 60*10, 0);
                 
+              	// Add distance listener (parameter has unit mm)
+		dir.addDistanceListener(new BrickletDistanceIR.DistanceListener() {
+			public void distance(int distance) {
+                                if (distance >= 790)
+                                {
+                                System.out.println("No Passage");
+                                MqttMessage message=new MqttMessage();
+                                message.setPayload(("No Passage").getBytes());
+                                message.setRetained(true);
+                                message.setQos(0);
+                                service.communication.publish(SENSOR_TYP+BASE_SENSOR_ID+"/Passage: ", message);
+                                
+                                
+                                DateInput di = new DateInput();
+                                MqttMessage dateMessage = new MqttMessage();
+                                dateMessage.setPayload((di.getDate()).getBytes());
+                                dateMessage.setRetained(true);
+                                dateMessage.setQos(0);
+                                service.communication.publish(SENSOR_TYP+BASE_SENSOR_ID+"/Date: ", dateMessage);
+                                }
+			}
+		});
+                                
+                
+		// Configure threshold for distance "smaller than 30 cm" (unit is mm)
+		dir.setDistanceCallbackThreshold('i', 5*10, 50*10);
+                
+                // Set period for distance callback to 0.2s (200ms)
+		// Note: The distance callback is only called every 0.2 seconds
+		//       if the distance has changed since the last call!
+		dir.setDistanceCallbackPeriod(200);
 
 		System.out.println("Press key to exit"); System.in.read();
 		ipcon.disconnect();

@@ -9,6 +9,7 @@ import com.tinkerforge.BrickletCO2;
 import com.tinkerforge.IPConnection;
 import com.communication.MQTTCommunication;
 import com.communication.MQTTParameters;
+import com.helpers.DateInput;
 
 import java.net.URI;
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
@@ -51,6 +52,7 @@ public class ServiceCo2 implements MqttCallback{
         communication.connect(parameters);
         communication.publishActualWill(STATUS_CONNECTION_ONLINE.getBytes());
         communication.subscribe(BASE_SENSOR_ID+"/#", 0);
+        parameters.getLastWillMessage();
 
     }
 
@@ -94,13 +96,20 @@ public class ServiceCo2 implements MqttCallback{
                                 message.setRetained(true);
                                 message.setQos(0);
                                 service.communication.publish(SENSOR_TYP+BASE_SENSOR_ID+"/Value: ", message);
+                                
+                                DateInput di = new DateInput();
+                                MqttMessage dateMessage = new MqttMessage();
+                                dateMessage.setPayload((di.getDate()).getBytes());
+                                dateMessage.setRetained(true);
+                                dateMessage.setQos(0);
+                                service.communication.publish(SENSOR_TYP+BASE_SENSOR_ID+"/Date: ", dateMessage);
 			}
 		});
 
 		// Set period for CO2 concentration callback to 1s (1000ms)
 		// Note: The CO2 concentration callback is only called every second
 		//       if the CO2 concentration has changed since the last call!
-		co2.setCO2ConcentrationCallbackPeriod(1000);
+		co2.setCO2ConcentrationCallbackPeriod(10000);
 
 		System.out.println("Press key to exit"); System.in.read();
 		ipcon.disconnect();

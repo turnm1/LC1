@@ -9,6 +9,7 @@ import com.tinkerforge.BrickletLoadCell;
 import com.tinkerforge.IPConnection;
 import com.communication.MQTTCommunication;
 import com.communication.MQTTParameters;
+import com.helpers.DateInput;
 
 import java.net.URI;
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
@@ -50,7 +51,8 @@ public class ServiceLoadCell implements MqttCallback{
         communication.connect(parameters);
         communication.publishActualWill(STATUS_CONNECTION_ONLINE.getBytes());
         communication.subscribe(BASE_SENSOR_ID+"/#", 0);
-
+        parameters.getLastWillMessage();
+        
     }
 
     @Override
@@ -96,6 +98,13 @@ public class ServiceLoadCell implements MqttCallback{
                                 message.setRetained(true);
                                 message.setQos(0);
                                 service.communication.publish(SENSOR_TYP+BASE_SENSOR_ID+"/Value: ", message);
+                                
+                                DateInput di = new DateInput();
+                                MqttMessage dateMessage = new MqttMessage();
+                                dateMessage.setPayload((di.getDate()).getBytes());
+                                dateMessage.setRetained(true);
+                                dateMessage.setQos(0);
+                                service.communication.publish(SENSOR_TYP+BASE_SENSOR_ID+"/Date: ", dateMessage);
 			}
 		});
 

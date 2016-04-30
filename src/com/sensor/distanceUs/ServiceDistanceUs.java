@@ -3,9 +3,9 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package com.sensor.laserrangefinder;
+package com.sensor.DistanceUs;
 
-import com.tinkerforge.BrickletLaserRangeFinder;
+import com.tinkerforge.BrickletDistanceUS;
 import com.tinkerforge.IPConnection;
 import com.communication.MQTTCommunication;
 import com.communication.MQTTParameters;
@@ -20,10 +20,10 @@ import org.eclipse.paho.client.mqttv3.MqttMessage;
  *
  * @author Turna
  */
-public class ServiceLaserRangeFinder implements MqttCallback{
+public class ServiceDistanceUs implements MqttCallback{
 
-    public final static String SENSOR_TYP = "Laser Range"; 
-    public final static String CLIENT_ID = "LR_01";
+    public final static String SENSOR_TYP = "Humidity"; 
+    public final static String CLIENT_ID = "H_01";
     public final static String BASE_SENSOR_ID = "/"+CLIENT_ID;
     public final static String STATUS_TOPIC = SENSOR_TYP + BASE_SENSOR_ID + "/status";
     
@@ -33,11 +33,11 @@ public class ServiceLaserRangeFinder implements MqttCallback{
     
     private final MQTTCommunication communication;
     
-        private static final String HOST = "localhost";
+        private static final String HOST = "192.168.1.16";
 	private static final int PORT = 4223;
-	private static final String UID = "qt4"; // Change to your UID
+	private static final String UID = "qSG"; // Change to your UID
     
-     public ServiceLaserRangeFinder() throws MqttException {
+     public ServiceDistanceUs() throws MqttException {
         communication = new MQTTCommunication();
         MQTTParameters parameters = new MQTTParameters();
         parameters.setClientID(CLIENT_ID);
@@ -77,26 +77,24 @@ public class ServiceLaserRangeFinder implements MqttCallback{
     //       you might normally want to catch are described in the documentation
     public static void main(String[] args) throws MqttException, Exception {
         
-        ServiceLaserRangeFinder service=new ServiceLaserRangeFinder();
+        ServiceDistanceUs service=new ServiceDistanceUs();
                 
-        
-               IPConnection ipcon = new IPConnection(); // Create IP connection
-		BrickletLaserRangeFinder lrf =
-		  new BrickletLaserRangeFinder(UID, ipcon); // Create device object
+  		IPConnection ipcon = new IPConnection(); // Create IP connection
+		BrickletDistanceUS dus = new BrickletDistanceUS(UID, ipcon); // Create device object
 
 		ipcon.connect(HOST, PORT); // Connect to brickd
 		// Don't use device before ipcon is connected
 
-		// Turn laser on and wait 250ms for very first measurement to be ready
-		lrf.enableLaser();
-		Thread.sleep(250);
+		// Get threshold callbacks with a debounce time of 10 seconds (10000ms)
+		dus.setDebouncePeriod(10000);
 
-		// Add distance listener (parameter has unit cm)
-		lrf.addDistanceListener(new BrickletLaserRangeFinder.DistanceListener() {
-			public void distance(int distance) {
-				System.out.println("Distance: " + distance + " cm");
+		// Add distance value reached listener
+		dus.addDistanceReachedListener(new BrickletDistanceUS.DistanceReachedListener() {
+			public void distanceReached(int distance) {
+				System.out.println("Distance Value: " + distance);
+			
                                 MqttMessage message=new MqttMessage();
-                                message.setPayload((""+ distance + " cm").getBytes());
+                                message.setPayload(("Distance Value: " + distance).getBytes());
                                 message.setRetained(true);
                                 message.setQos(0);
                                 service.communication.publish(SENSOR_TYP+BASE_SENSOR_ID+"/Value: ", message);
@@ -110,13 +108,10 @@ public class ServiceLaserRangeFinder implements MqttCallback{
 			}
 		});
 
-		// Set period for distance callback to 0.2s (200ms)
-		// Note: The distance callback is only called every 0.2 seconds
-		//       if the distance has changed since the last call!
-		lrf.setDistanceCallbackPeriod(200);
+		// Configure threshold for distance value "smaller than 200"
+		dus.setDistanceCallbackThreshold('<', 200, 0);
 
 		System.out.println("Press key to exit"); System.in.read();
-		lrf.disableLaser(); // Turn laser off
 		ipcon.disconnect();
     }
     

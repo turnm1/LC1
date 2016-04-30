@@ -9,6 +9,7 @@ import com.tinkerforge.BrickletSoundIntensity;
 import com.tinkerforge.IPConnection;
 import com.communication.MQTTCommunication;
 import com.communication.MQTTParameters;
+import com.helpers.DateInput;
 import com.helpers.HostConnection;
 import com.sensor.temperaturIr.ServiceTemperaturIr;
 
@@ -40,7 +41,7 @@ public class ServiceSoundIntensity implements MqttCallback {
     
     private final MQTTCommunication communication;
     
-        private static final String HOST = "192.168.1.16";
+        private static final String HOST = "localhost";
 	private static final int PORT = 4223;
 	private static final String UID = "mnn"; // Change to your UID
     
@@ -58,6 +59,7 @@ public class ServiceSoundIntensity implements MqttCallback {
         communication.connect(parameters);
         communication.publishActualWill(STATUS_CONNECTION_ONLINE.getBytes());
         communication.subscribe(BASE_SENSOR_ID+"/#", 0);
+        parameters.getLastWillMessage();
 
        
     }
@@ -110,26 +112,24 @@ public class ServiceSoundIntensity implements MqttCallback {
                         public void intensityReached(int intensity) {
 				System.out.println("Intensity: " + intensity);
                                 
-                                
-                                try {
                                 MqttMessage message = new MqttMessage();
                                 message.setPayload((" " + intensity).getBytes());
                                 message.setRetained(true);
                                 message.setQos(0);
-                                                                                          
-                                
-                                // Publish to the Broker
-                                // Publish message when intensity "greater than 800" <- DB Data
                                 service.communication.publish(SENSOR_TYP+BASE_SENSOR_ID+"/Value: ", message);
+                                
+                                
+                                DateInput di = new DateInput();
+                                MqttMessage dateMessage = new MqttMessage();
+                                dateMessage.setPayload((di.getDate()).getBytes());
+                                dateMessage.setRetained(true);
+                                dateMessage.setQos(0);
+                                service.communication.publish(SENSOR_TYP+BASE_SENSOR_ID+"/Date: ", dateMessage);
                                                                                                                                                                                         
                                 // FALSCHER ORT - ES MUSS EINE WEITERE METHODE EXISTIEREN MIT ZEITLICHER SUBSCRIBE! HIER WIRD NUR SUBSCRIBT, WENN EIN PUBLISH GEMACHT WIRD
                                 // Subscribe via Broker from other Clients(publisher)
-                                service.communication.subscribe(SUBSCIRBE_SSI, 0);
-                                
-                                }
-                                catch(Exception e){
-                                     e.printStackTrace();
-                                }
+                                // service.communication.subscribe(SUBSCIRBE_SSI, 0);
+                               
                                       
 			}
 		});

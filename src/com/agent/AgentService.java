@@ -5,8 +5,7 @@
 package com.agent;
 
 
-import com.tinkerforge.BrickletSoundIntensity;
-import com.tinkerforge.IPConnection;
+
 import com.communication.MQTTCommunication;
 import com.communication.MQTTParameters;
 import com.sensor.soundintensity.ServiceSoundIntensity;
@@ -60,6 +59,7 @@ public class AgentService implements MqttCallback {
         communication.connect(parameters);
         communication.publishActualWill(STATUS_CONNECTION_ONLINE.getBytes());
         communication.subscribe(AGENT+"/#", 0);
+        parameters.getLastWillMessage();
 
     }
 
@@ -78,9 +78,7 @@ public class AgentService implements MqttCallback {
         System.out.println("Delivery is done.");
     }
 
-    
-    
-    
+   
     public static void main(String[] args) throws MqttException {
         AgentService service = new AgentService();
                

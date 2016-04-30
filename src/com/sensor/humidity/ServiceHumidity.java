@@ -9,6 +9,7 @@ import com.tinkerforge.BrickletHumidity;
 import com.tinkerforge.IPConnection;
 import com.communication.MQTTCommunication;
 import com.communication.MQTTParameters;
+import com.helpers.DateInput;
 
 import java.net.URI;
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
@@ -32,7 +33,7 @@ public class ServiceHumidity implements MqttCallback{
     
     private final MQTTCommunication communication;
     
-        private static final String HOST = "localhost";
+        private static final String HOST = "192.168.1.16";
 	private static final int PORT = 4223;
 	private static final String UID = "qSG"; // Change to your UID
     
@@ -50,6 +51,7 @@ public class ServiceHumidity implements MqttCallback{
         communication.connect(parameters);
         communication.publishActualWill(STATUS_CONNECTION_ONLINE.getBytes());
         communication.subscribe(BASE_SENSOR_ID+"/#", 0);
+        parameters.getLastWillMessage();
 
     }
 
@@ -83,23 +85,33 @@ public class ServiceHumidity implements MqttCallback{
 
 		ipcon.connect(HOST, PORT); // Connect to brickd
 		// Don't use device before ipcon is connected
-
-		// Add humidity listener (parameter has unit %RH/10)
-		h.addHumidityListener(new BrickletHumidity.HumidityListener() {
-			public void humidity(int humidity) {
+                
+             
+		// Add humidity reached listener (parameter has unit %RH/10)
+		h.addHumidityReachedListener(new BrickletHumidity.HumidityReachedListener() {
+			public void humidityReached(int humidity) {
 				System.out.println("Humidity: " + humidity/10.0 + " %RH");
+
                                 MqttMessage message=new MqttMessage();
                                 message.setPayload((""+ humidity/10.0 + " %RH").getBytes());
                                 message.setRetained(true);
                                 message.setQos(0);
                                 service.communication.publish(SENSOR_TYP+BASE_SENSOR_ID+"/Value: ", message);
+                                
+                                DateInput di = new DateInput();
+                                MqttMessage dateMessage = new MqttMessage();
+                                dateMessage.setPayload((di.getDate()).getBytes());
+                                dateMessage.setRetained(true);
+                                dateMessage.setQos(0);
+                                service.communication.publish(SENSOR_TYP+BASE_SENSOR_ID+"/Date: ", dateMessage);
 			}
 		});
 
-		// Set period for humidity callback to 1s (1000ms)
-		// Note: The humidity callback is only called every second
-		//       if the humidity has changed since the last call!
-		h.setHumidityCallbackPeriod(1000);
+		// Configure threshold for humidity "outside of 30 to 60 %RH" (unit is %RH/10)
+		h.setHumidityCallbackThreshold('o', 35*10, 45*10);
+                
+                   // Get threshold callbacks with a debounce time of 10 seconds (10000ms)
+		h.setDebouncePeriod(10000);
 
 		System.out.println("Press key to exit"); System.in.read();
 		ipcon.disconnect();

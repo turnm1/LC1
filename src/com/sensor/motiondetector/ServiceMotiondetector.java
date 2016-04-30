@@ -9,8 +9,14 @@ import com.tinkerforge.BrickletMotionDetector;
 import com.tinkerforge.IPConnection;
 import com.communication.MQTTCommunication;
 import com.communication.MQTTParameters;
+import com.helpers.DateInput;
+import com.helpers.StopWatch;
+import com.tinkerforge.NotConnectedException;
+import com.tinkerforge.TimeoutException;
 
 import java.net.URI;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
 import org.eclipse.paho.client.mqttv3.MqttCallback;
 import org.eclipse.paho.client.mqttv3.MqttException;
@@ -32,7 +38,7 @@ public class ServiceMotiondetector implements MqttCallback{
     
     private final MQTTCommunication communication;
     
-        private static final String HOST = "192.168.1.16";
+        private static final String HOST = "localhost";
 	private static final int PORT = 4223;
 	private static final String UID = "qtu"; // Change to your UID
     
@@ -50,6 +56,7 @@ public class ServiceMotiondetector implements MqttCallback{
         communication.connect(parameters);
         communication.publishActualWill(STATUS_CONNECTION_ONLINE.getBytes());
         communication.subscribe(BASE_SENSOR_ID+"/#", 0);
+        parameters.getLastWillMessage();
 
     }
 
@@ -67,42 +74,64 @@ public class ServiceMotiondetector implements MqttCallback{
     public void deliveryComplete(IMqttDeliveryToken imdt) {
         System.out.println("Delivery is done.");
     }
-
-    
-    
+   
+ 
     
     // Note: To make the example code cleaner we do not handle exceptions. Exceptions
     //       you might normally want to catch are described in the documentation
     public static void main(String[] args) throws MqttException, Exception {
         
-        ServiceMotiondetector service=new ServiceMotiondetector();
-                
+                ServiceMotiondetector service=new ServiceMotiondetector();
+                               
         
-               IPConnection ipcon = new IPConnection(); // Create IP connection
+                IPConnection ipcon = new IPConnection(); // Create IP connection
 		BrickletMotionDetector md = new BrickletMotionDetector(UID, ipcon); // Create device object
 
 		ipcon.connect(HOST, PORT); // Connect to brickd
 		// Don't use device before ipcon is connected
 
+              
+                
 		// Add motion detected listener
 		md.addMotionDetectedListener(new BrickletMotionDetector.MotionDetectedListener() {
 			public void motionDetected() {
-				System.out.println("Motion Detected");
-			}
-		});
 
+                                MqttMessage message=new MqttMessage();
+                                message.setPayload(("Motion Detected").getBytes());
+                                message.setRetained(true);
+                                message.setQos(0);
+                                service.communication.publish(SENSOR_TYP+BASE_SENSOR_ID+"/Motion: ", message);
+                                
+                                DateInput di = new DateInput();
+                                MqttMessage dateMessage = new MqttMessage();
+                                dateMessage.setPayload((di.getDate()).getBytes());
+                                dateMessage.setRetained(true);
+                                dateMessage.setQos(0);
+                                service.communication.publish(SENSOR_TYP+BASE_SENSOR_ID+"/Date: ", dateMessage);
+                        }
+		});
+                
+              
 		// Add detection cycle ended listener
 		md.addDetectionCycleEndedListener(new BrickletMotionDetector.DetectionCycleEndedListener() {
 			public void detectionCycleEnded() {
-				System.out.println("Detection Cycle Ended (next detection possible in ~3 seconds)");
+
                                 MqttMessage message=new MqttMessage();
-                                message.setPayload(("Detection Cycle Ended (next detection possible in ~3 seconds)").getBytes());
+                                message.setPayload(("Motion Ended").getBytes());
                                 message.setRetained(true);
                                 message.setQos(0);
-                                service.communication.publish(SENSOR_TYP+BASE_SENSOR_ID+"/Value: ", message);
-			}
+                                service.communication.publish(SENSOR_TYP+BASE_SENSOR_ID+"/Motion: ", message);
+                                
+                                DateInput di = new DateInput();
+                                MqttMessage dateMessage = new MqttMessage();
+                                dateMessage.setPayload((di.getDate()).getBytes());
+                                dateMessage.setRetained(true);
+                                dateMessage.setQos(0);
+                                service.communication.publish(SENSOR_TYP+BASE_SENSOR_ID+"/Date: ", dateMessage);
+                         }
 		});
-
+                
+                
 		System.out.println("Press key to exit"); System.in.read();
 		ipcon.disconnect();
     }

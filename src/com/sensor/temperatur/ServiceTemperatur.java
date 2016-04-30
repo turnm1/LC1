@@ -9,6 +9,7 @@ import com.tinkerforge.BrickletTemperature;
 import com.tinkerforge.IPConnection;
 import com.communication.MQTTCommunication;
 import com.communication.MQTTParameters;
+import com.helpers.DateInput;
 
 import java.net.URI;
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
@@ -50,6 +51,7 @@ public class ServiceTemperatur implements MqttCallback{
         communication.connect(parameters);
         communication.publishActualWill(STATUS_CONNECTION_ONLINE.getBytes());
         communication.subscribe(BASE_SENSOR_ID+"/#", 0);
+        parameters.getLastWillMessage();
 
     }
 
@@ -84,22 +86,30 @@ public class ServiceTemperatur implements MqttCallback{
 		ipcon.connect(HOST, PORT); // Connect to brickd
 		// Don't use device before ipcon is connected
 
-		// Add temperature listener (parameter has unit °C/100)
-		t.addTemperatureListener(new BrickletTemperature.TemperatureListener() {
-			public void temperature(short temperature) {
+		// Add temperature reached listener (parameter has unit °C/100)
+		t.addTemperatureReachedListener(new BrickletTemperature.TemperatureReachedListener() {
+			public void temperatureReached(short temperature) {
 				System.out.println("Temperature: " + temperature/100.0 + " °C");
                                 MqttMessage message=new MqttMessage();
                                 message.setPayload((" " + temperature/100.0 + " °C").getBytes());
                                 message.setRetained(true);
                                 message.setQos(0);
                                 service.communication.publish(SENSOR_TYP+BASE_SENSOR_ID+"/Value: ", message);
+                                
+                                DateInput di = new DateInput();
+                                MqttMessage dateMessage = new MqttMessage();
+                                dateMessage.setPayload((di.getDate()).getBytes());
+                                dateMessage.setRetained(true);
+                                dateMessage.setQos(0);
+                                service.communication.publish(SENSOR_TYP+BASE_SENSOR_ID+"/Date: ", dateMessage);
 			}
 		});
 
-		// Set period for temperature callback to 1s (1000ms)
-		// Note: The temperature callback is only called every second
-		//       if the temperature has changed since the last call!
-		t.setTemperatureCallbackPeriod(1000);
+		// Configure threshold for temperature "greater than 30 °C" (unit is °C/100)
+		t.setTemperatureCallbackThreshold('o', (short)(30*100), (short)(40*100));
+                
+                // Get threshold callbacks with a debounce time of 10 seconds (10000ms)
+		t.setDebouncePeriod(10000);
 
 		System.out.println("Press key to exit"); System.in.read();
 		ipcon.disconnect();
