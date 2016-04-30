@@ -10,6 +10,7 @@ import com.tinkerforge.IPConnection;
 import com.communication.MQTTCommunication;
 import com.communication.MQTTParameters;
 import com.helpers.DateInput;
+import com.helpers.HostConnection;
 
 import java.net.URI;
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
@@ -22,20 +23,17 @@ import org.eclipse.paho.client.mqttv3.MqttMessage;
  */
 public class ServiceHumidity implements MqttCallback{
 
-    public final static String SENSOR_TYP = "Humidity"; 
-    public final static String CLIENT_ID = "H_01";
-    public final static String BASE_SENSOR_ID = "/"+CLIENT_ID;
-    public final static String STATUS_TOPIC = SENSOR_TYP + BASE_SENSOR_ID + "/status";
+    private static final String UID = "qSG"; // Change to your UID
     
-    public final static String STATUS_TOPIC_CONNECTION = STATUS_TOPIC + "/connection";
-    public final static String STATUS_CONNECTION_OFFLINE="offline";
-    public final static String STATUS_CONNECTION_ONLINE="online";
+    public final static String BASE_SENSOR_ID = "Humidity";
+        public final static String CLIENT_ID = BASE_SENSOR_ID+"/"+UID;
+        public final static String STATUS_TOPIC = CLIENT_ID + "/status";
+        public final static String STATUS_TOPIC_CONNECTION = STATUS_TOPIC + "/connection";
+        public final static String STATUS_CONNECTION_OFFLINE="offline";
+        public final static String STATUS_CONNECTION_ONLINE="online";
     
     private final MQTTCommunication communication;
-    
-        private static final String HOST = "192.168.1.16";
-	private static final int PORT = 4223;
-	private static final String UID = "qSG"; // Change to your UID
+
     
      public ServiceHumidity() throws MqttException {
         communication = new MQTTCommunication();
@@ -80,13 +78,16 @@ public class ServiceHumidity implements MqttCallback{
         ServiceHumidity service=new ServiceHumidity();
                 
         
-               IPConnection ipcon = new IPConnection(); // Create IP connection
+               IPConnection ipcon = new IPConnection();
+                HostConnection hc = new HostConnection();
+                String HOST = hc.getHostIP();
+                int PORT = hc.getPort();     
+                ipcon.connect(HOST, PORT); // Connect to brickd
+                // Don't use device before ipcon is connected
+                
 		BrickletHumidity h = new BrickletHumidity(UID, ipcon); // Create device object
 
-		ipcon.connect(HOST, PORT); // Connect to brickd
-		// Don't use device before ipcon is connected
                 
-             
 		// Add humidity reached listener (parameter has unit %RH/10)
 		h.addHumidityReachedListener(new BrickletHumidity.HumidityReachedListener() {
 			public void humidityReached(int humidity) {
@@ -96,14 +97,14 @@ public class ServiceHumidity implements MqttCallback{
                                 message.setPayload((""+ humidity/10.0 + " %RH").getBytes());
                                 message.setRetained(true);
                                 message.setQos(0);
-                                service.communication.publish(SENSOR_TYP+BASE_SENSOR_ID+"/Value: ", message);
+                                service.communication.publish(CLIENT_ID+"/Value: ", message);
                                 
                                 DateInput di = new DateInput();
                                 MqttMessage dateMessage = new MqttMessage();
                                 dateMessage.setPayload((di.getDate()).getBytes());
                                 dateMessage.setRetained(true);
                                 dateMessage.setQos(0);
-                                service.communication.publish(SENSOR_TYP+BASE_SENSOR_ID+"/Date: ", dateMessage);
+                                service.communication.publish(CLIENT_ID+"/Date: ", dateMessage);
 			}
 		});
 
@@ -113,8 +114,6 @@ public class ServiceHumidity implements MqttCallback{
                    // Get threshold callbacks with a debounce time of 10 seconds (10000ms)
 		h.setDebouncePeriod(10000);
 
-		System.out.println("Press key to exit"); System.in.read();
-		ipcon.disconnect();
     }
     
 }

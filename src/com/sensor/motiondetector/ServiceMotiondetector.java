@@ -10,13 +10,9 @@ import com.tinkerforge.IPConnection;
 import com.communication.MQTTCommunication;
 import com.communication.MQTTParameters;
 import com.helpers.DateInput;
-import com.helpers.StopWatch;
-import com.tinkerforge.NotConnectedException;
-import com.tinkerforge.TimeoutException;
+import com.helpers.HostConnection;
 
 import java.net.URI;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
 import org.eclipse.paho.client.mqttv3.MqttCallback;
 import org.eclipse.paho.client.mqttv3.MqttException;
@@ -27,20 +23,18 @@ import org.eclipse.paho.client.mqttv3.MqttMessage;
  */
 public class ServiceMotiondetector implements MqttCallback{
 
-    public final static String SENSOR_TYP = "Motion Detector"; 
-    public final static String CLIENT_ID = "MD_01";
-    public final static String BASE_SENSOR_ID = "/"+CLIENT_ID;
-    public final static String STATUS_TOPIC = SENSOR_TYP + BASE_SENSOR_ID + "/status";
-    
-    public final static String STATUS_TOPIC_CONNECTION = STATUS_TOPIC + "/connection";
-    public final static String STATUS_CONNECTION_OFFLINE="offline";
-    public final static String STATUS_CONNECTION_ONLINE="online";
+    	private static final String UID = "qtu"; // Change to your UID
+        
+  public final static String BASE_SENSOR_ID = "Motion Detector";
+        public final static String CLIENT_ID = BASE_SENSOR_ID+"/"+UID;
+        public final static String STATUS_TOPIC = CLIENT_ID + "/status";
+        public final static String STATUS_TOPIC_CONNECTION = STATUS_TOPIC + "/connection";
+        public final static String STATUS_CONNECTION_OFFLINE="offline";
+        public final static String STATUS_CONNECTION_ONLINE="online";
+
     
     private final MQTTCommunication communication;
     
-        private static final String HOST = "localhost";
-	private static final int PORT = 4223;
-	private static final String UID = "qtu"; // Change to your UID
     
      public ServiceMotiondetector() throws MqttException {
         communication = new MQTTCommunication();
@@ -84,14 +78,16 @@ public class ServiceMotiondetector implements MqttCallback{
                 ServiceMotiondetector service=new ServiceMotiondetector();
                                
         
-                IPConnection ipcon = new IPConnection(); // Create IP connection
+                IPConnection ipcon = new IPConnection();
+                HostConnection hc = new HostConnection();
+                String HOST = hc.getLocalhost();
+                int PORT = hc.getPort();     
+                ipcon.connect(HOST, PORT); // Connect to brickd
+                // Don't use device before ipcon is connected
+                
 		BrickletMotionDetector md = new BrickletMotionDetector(UID, ipcon); // Create device object
 
-		ipcon.connect(HOST, PORT); // Connect to brickd
-		// Don't use device before ipcon is connected
-
               
-                
 		// Add motion detected listener
 		md.addMotionDetectedListener(new BrickletMotionDetector.MotionDetectedListener() {
 			public void motionDetected() {
@@ -100,14 +96,14 @@ public class ServiceMotiondetector implements MqttCallback{
                                 message.setPayload(("Motion Detected").getBytes());
                                 message.setRetained(true);
                                 message.setQos(0);
-                                service.communication.publish(SENSOR_TYP+BASE_SENSOR_ID+"/Motion: ", message);
+                                service.communication.publish(CLIENT_ID+"/Motion: ", message);
                                 
                                 DateInput di = new DateInput();
                                 MqttMessage dateMessage = new MqttMessage();
                                 dateMessage.setPayload((di.getDate()).getBytes());
                                 dateMessage.setRetained(true);
                                 dateMessage.setQos(0);
-                                service.communication.publish(SENSOR_TYP+BASE_SENSOR_ID+"/Date: ", dateMessage);
+                                service.communication.publish(CLIENT_ID+"/Date: ", dateMessage);
                         }
 		});
                 
@@ -120,20 +116,17 @@ public class ServiceMotiondetector implements MqttCallback{
                                 message.setPayload(("Motion Ended").getBytes());
                                 message.setRetained(true);
                                 message.setQos(0);
-                                service.communication.publish(SENSOR_TYP+BASE_SENSOR_ID+"/Motion: ", message);
+                                service.communication.publish(CLIENT_ID+"/Motion: ", message);
                                 
                                 DateInput di = new DateInput();
                                 MqttMessage dateMessage = new MqttMessage();
                                 dateMessage.setPayload((di.getDate()).getBytes());
                                 dateMessage.setRetained(true);
                                 dateMessage.setQos(0);
-                                service.communication.publish(SENSOR_TYP+BASE_SENSOR_ID+"/Date: ", dateMessage);
+                                service.communication.publish(CLIENT_ID+"/Date: ", dateMessage);
                          }
 		});
                 
-                
-		System.out.println("Press key to exit"); System.in.read();
-		ipcon.disconnect();
     }
     
 }

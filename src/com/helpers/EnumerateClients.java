@@ -3,15 +3,17 @@ package com.helpers;
 import com.tinkerforge.IPConnection;
 
 public class EnumerateClients {
-	private static final String HOST = "localhost";
-	private static final int PORT = 4223;
-
+	
 	// Note: To make the example code cleaner we do not handle exceptions. Exceptions you
 	//       might normally want to catch are described in the documentation
 	public static void main(String args[]) throws Exception {
-		// Create connection and connect to brickd
-		IPConnection ipcon = new IPConnection();
-		ipcon.connect(HOST, PORT);
+		
+            IPConnection ipcon = new IPConnection();
+                HostConnection hc = new HostConnection();
+                String HOST = hc.getHostIP();
+                int PORT = hc.getPort();     
+                ipcon.connect(HOST, PORT); // Connect to brickd
+                // Don't use device before ipcon is connected
 
 		// Register enumerate listener and print incoming information
 		ipcon.addEnumerateListener(new IPConnection.EnumerateListener() {

@@ -10,6 +10,7 @@ import com.tinkerforge.IPConnection;
 import com.communication.MQTTCommunication;
 import com.communication.MQTTParameters;
 import com.helpers.DateInput;
+import com.helpers.HostConnection;
 
 import java.net.URI;
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
@@ -22,22 +23,18 @@ import org.eclipse.paho.client.mqttv3.MqttMessage;
  */
 public class ServiceCo2 implements MqttCallback{
 
-   
-    public final static String SENSOR_TYP = "CO2"; 
-    public final static String CLIENT_ID = "CO2_01";
-    public final static String BASE_SENSOR_ID = "/"+CLIENT_ID;
-    public final static String STATUS_TOPIC = SENSOR_TYP + BASE_SENSOR_ID + "/status";
+        private static final String UID = "x71"; // Change to your UID
+        
+        public final static String BASE_SENSOR_ID = "CO2";
+        public final static String CLIENT_ID = BASE_SENSOR_ID+"/"+UID;
+        public final static String STATUS_TOPIC = CLIENT_ID + "/status";
+        public final static String STATUS_TOPIC_CONNECTION = STATUS_TOPIC + "/connection";
+        public final static String STATUS_CONNECTION_OFFLINE="offline";
+        public final static String STATUS_CONNECTION_ONLINE="online";
+
+        private final MQTTCommunication communication;
     
-    public final static String STATUS_TOPIC_CONNECTION = STATUS_TOPIC + "/connection";
-    public final static String STATUS_CONNECTION_OFFLINE="offline";
-    public final static String STATUS_CONNECTION_ONLINE="online";
-    
-    private final MQTTCommunication communication;
-    
-        private static final String HOST = "localhost";
-	private static final int PORT = 4223;
-	private static final String UID = "x71"; // Change to your UID
-    
+        
      public ServiceCo2() throws MqttException {
         communication = new MQTTCommunication();
         MQTTParameters parameters = new MQTTParameters();
@@ -78,14 +75,17 @@ public class ServiceCo2 implements MqttCallback{
     //       you might normally want to catch are described in the documentation
     public static void main(String[] args) throws MqttException, Exception {
         
-        ServiceCo2 service=new ServiceCo2();
+        ServiceCo2 service = new ServiceCo2();
                 
-        
-               IPConnection ipcon = new IPConnection(); // Create IP connection
+                IPConnection ipcon = new IPConnection();
+                HostConnection hc = new HostConnection();
+                String HOST = hc.getHostIP();
+                int PORT = hc.getPort();     
+                ipcon.connect(HOST, PORT); // Connect to brickd
+                // Don't use device before ipcon is connected
+                
 		BrickletCO2 co2 = new BrickletCO2(UID, ipcon); // Create device object
 
-		ipcon.connect(HOST, PORT); // Connect to brickd
-		// Don't use device before ipcon is connected
 
 		// Add CO2 concentration listener (parameter has unit ppm)
 		co2.addCO2ConcentrationListener(new BrickletCO2.CO2ConcentrationListener() {
@@ -95,14 +95,14 @@ public class ServiceCo2 implements MqttCallback{
                                 message.setPayload((""+co2Concentration + " ppm").getBytes());
                                 message.setRetained(true);
                                 message.setQos(0);
-                                service.communication.publish(SENSOR_TYP+BASE_SENSOR_ID+"/Value: ", message);
+                                service.communication.publish(CLIENT_ID+"/Value: ", message);
                                 
                                 DateInput di = new DateInput();
                                 MqttMessage dateMessage = new MqttMessage();
                                 dateMessage.setPayload((di.getDate()).getBytes());
                                 dateMessage.setRetained(true);
                                 dateMessage.setQos(0);
-                                service.communication.publish(SENSOR_TYP+BASE_SENSOR_ID+"/Date: ", dateMessage);
+                                service.communication.publish(CLIENT_ID+"/Date: ", dateMessage);
 			}
 		});
 
@@ -111,8 +111,7 @@ public class ServiceCo2 implements MqttCallback{
 		//       if the CO2 concentration has changed since the last call!
 		co2.setCO2ConcentrationCallbackPeriod(10000);
 
-		System.out.println("Press key to exit"); System.in.read();
-		ipcon.disconnect();
+		
     }
     
 }

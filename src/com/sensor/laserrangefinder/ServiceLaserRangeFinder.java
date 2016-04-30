@@ -10,6 +10,7 @@ import com.tinkerforge.IPConnection;
 import com.communication.MQTTCommunication;
 import com.communication.MQTTParameters;
 import com.helpers.DateInput;
+import com.helpers.HostConnection;
 
 import java.net.URI;
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
@@ -22,20 +23,17 @@ import org.eclipse.paho.client.mqttv3.MqttMessage;
  */
 public class ServiceLaserRangeFinder implements MqttCallback{
 
-    public final static String SENSOR_TYP = "Laser Range"; 
-    public final static String CLIENT_ID = "LR_01";
-    public final static String BASE_SENSOR_ID = "/"+CLIENT_ID;
-    public final static String STATUS_TOPIC = SENSOR_TYP + BASE_SENSOR_ID + "/status";
+    private static final String UID = "qt4"; // Change to your UID
     
-    public final static String STATUS_TOPIC_CONNECTION = STATUS_TOPIC + "/connection";
-    public final static String STATUS_CONNECTION_OFFLINE="offline";
-    public final static String STATUS_CONNECTION_ONLINE="online";
+    public final static String BASE_SENSOR_ID = "Laser Range";
+        public final static String CLIENT_ID = BASE_SENSOR_ID+"/"+UID;
+        public final static String STATUS_TOPIC = CLIENT_ID + "/status";
+        public final static String STATUS_TOPIC_CONNECTION = STATUS_TOPIC + "/connection";
+        public final static String STATUS_CONNECTION_OFFLINE="offline";
+        public final static String STATUS_CONNECTION_ONLINE="online";
     
     private final MQTTCommunication communication;
     
-        private static final String HOST = "localhost";
-	private static final int PORT = 4223;
-	private static final String UID = "qt4"; // Change to your UID
     
      public ServiceLaserRangeFinder() throws MqttException {
         communication = new MQTTCommunication();
@@ -80,12 +78,15 @@ public class ServiceLaserRangeFinder implements MqttCallback{
         ServiceLaserRangeFinder service=new ServiceLaserRangeFinder();
                 
         
-               IPConnection ipcon = new IPConnection(); // Create IP connection
-		BrickletLaserRangeFinder lrf =
-		  new BrickletLaserRangeFinder(UID, ipcon); // Create device object
+               IPConnection ipcon = new IPConnection();
+                HostConnection hc = new HostConnection();
+                String HOST = hc.getHostIP();
+                int PORT = hc.getPort();     
+                ipcon.connect(HOST, PORT); // Connect to brickd
+                // Don't use device before ipcon is connected
+                
+		BrickletLaserRangeFinder lrf = new BrickletLaserRangeFinder(UID, ipcon); // Create device object
 
-		ipcon.connect(HOST, PORT); // Connect to brickd
-		// Don't use device before ipcon is connected
 
 		// Turn laser on and wait 250ms for very first measurement to be ready
 		lrf.enableLaser();
@@ -99,14 +100,14 @@ public class ServiceLaserRangeFinder implements MqttCallback{
                                 message.setPayload((""+ distance + " cm").getBytes());
                                 message.setRetained(true);
                                 message.setQos(0);
-                                service.communication.publish(SENSOR_TYP+BASE_SENSOR_ID+"/Value: ", message);
+                                service.communication.publish(CLIENT_ID+"/Value: ", message);
                                 
                                 DateInput di = new DateInput();
                                 MqttMessage dateMessage = new MqttMessage();
                                 dateMessage.setPayload((di.getDate()).getBytes());
                                 dateMessage.setRetained(true);
                                 dateMessage.setQos(0);
-                                service.communication.publish(SENSOR_TYP+BASE_SENSOR_ID+"/Date: ", dateMessage);
+                                service.communication.publish(CLIENT_ID+"/Date: ", dateMessage);
 			}
 		});
 
@@ -114,10 +115,7 @@ public class ServiceLaserRangeFinder implements MqttCallback{
 		// Note: The distance callback is only called every 0.2 seconds
 		//       if the distance has changed since the last call!
 		lrf.setDistanceCallbackPeriod(200);
-
-		System.out.println("Press key to exit"); System.in.read();
-		lrf.disableLaser(); // Turn laser off
-		ipcon.disconnect();
+                lrf.disableLaser(); // Turn laser off
     }
     
 }

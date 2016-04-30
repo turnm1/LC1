@@ -12,6 +12,7 @@ package com.helpers;
 public class SensorClient {
     
     
+    
 // add New Client to the Broker
 public void addNewClient(){
 

@@ -3,9 +3,9 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package com.sensor.loadcell;
+package com.sensor.co2;
 
-import com.tinkerforge.BrickletLoadCell;
+import com.tinkerforge.BrickletCO2;
 import com.tinkerforge.IPConnection;
 import com.communication.MQTTCommunication;
 import com.communication.MQTTParameters;
@@ -21,24 +21,24 @@ import org.eclipse.paho.client.mqttv3.MqttMessage;
  *
  * @author Turna
  */
-public class ServiceLoadCell implements MqttCallback{
-  
-    private static final String UID = "vdT"; // Change to your UID
-    
-    public final static String BASE_SENSOR_ID = "Load Cell";
+public class ServiceCo2_2 implements MqttCallback{
+
+        private static final String UID = "x76"; // Change to your UID
+        
+        public final static String BASE_SENSOR_ID = "CO2";
         public final static String CLIENT_ID = BASE_SENSOR_ID+"/"+UID;
         public final static String STATUS_TOPIC = CLIENT_ID + "/status";
         public final static String STATUS_TOPIC_CONNECTION = STATUS_TOPIC + "/connection";
         public final static String STATUS_CONNECTION_OFFLINE="offline";
         public final static String STATUS_CONNECTION_ONLINE="online";
 
+        private final MQTTCommunication communication;
+   
     
-    private final MQTTCommunication communication;
-
-    
-     public ServiceLoadCell() throws MqttException {
+        
+     public ServiceCo2_2() throws MqttException {
         communication = new MQTTCommunication();
-        MQTTParameters parameters = new MQTTParameters();
+        MQTTParameters parameters = new MQTTParameters();    
         parameters.setClientID(CLIENT_ID);
         parameters.setIsCleanSession(false);
         parameters.setIsLastWillRetained(true);
@@ -51,7 +51,7 @@ public class ServiceLoadCell implements MqttCallback{
         communication.publishActualWill(STATUS_CONNECTION_ONLINE.getBytes());
         communication.subscribe(BASE_SENSOR_ID+"/#", 0);
         parameters.getLastWillMessage();
-        
+
     }
 
     @Override
@@ -76,28 +76,24 @@ public class ServiceLoadCell implements MqttCallback{
     //       you might normally want to catch are described in the documentation
     public static void main(String[] args) throws MqttException, Exception {
         
-        ServiceLoadCell service=new ServiceLoadCell();
+        ServiceCo2_2 service = new ServiceCo2_2();
                 
-        
-              IPConnection ipcon = new IPConnection();
+                IPConnection ipcon = new IPConnection();
                 HostConnection hc = new HostConnection();
                 String HOST = hc.getHostIP();
                 int PORT = hc.getPort();     
                 ipcon.connect(HOST, PORT); // Connect to brickd
                 // Don't use device before ipcon is connected
                 
-		BrickletLoadCell lc = new BrickletLoadCell(UID, ipcon); // Create device object
+		BrickletCO2 co2 = new BrickletCO2(UID, ipcon); // Create device object
 
 
-		// Get threshold callbacks with a debounce time of 1 second (1000ms)
-		lc.setDebouncePeriod(1000);
-
-		// Add weight reached listener (parameter has unit g)
-		lc.addWeightReachedListener(new BrickletLoadCell.WeightReachedListener() {
-			public void weightReached(int weight) {
-				System.out.println("Weight: " + weight + " g");
+		// Add CO2 concentration listener (parameter has unit ppm)
+		co2.addCO2ConcentrationListener(new BrickletCO2.CO2ConcentrationListener() {
+			public void co2Concentration(int co2Concentration) {
+				System.out.println("CO2 Concentration: " + co2Concentration + " ppm");
                                 MqttMessage message=new MqttMessage();
-                                message.setPayload((""+ weight + " g").getBytes());
+                                message.setPayload((""+co2Concentration + " ppm").getBytes());
                                 message.setRetained(true);
                                 message.setQos(0);
                                 service.communication.publish(CLIENT_ID+"/Value: ", message);
@@ -111,9 +107,12 @@ public class ServiceLoadCell implements MqttCallback{
 			}
 		});
 
-		// Configure threshold for weight "greater than 200 g" (unit is g)
-		lc.setWeightCallbackThreshold('>', 200, 0);
+		// Set period for CO2 concentration callback to 1s (1000ms)
+		// Note: The CO2 concentration callback is only called every second
+		//       if the CO2 concentration has changed since the last call!
+		co2.setCO2ConcentrationCallbackPeriod(10000);
 
+		
     }
     
 }

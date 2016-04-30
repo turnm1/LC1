@@ -5,46 +5,27 @@
  */
 package com.helpers;
 
-import java.util.Scanner;
-
 /**
  *
  * @author Turna
  */
 public class HostConnection {
    
-   public static String HostIP ="";
-   public static int Port;
+   private static String HostIP ="192.168.1.16";
+   private static String HostIPLocalhost = "localhost";
+   private static int Port = 4223;
    
-    public static void setHostIP(){
-        Scanner sc = new Scanner(System.in);
-        HostIP = sc.next();
-    }
-    
     public String getHostIP(){
         return HostIP;
     }
- 
-    public static void setPort(){
-        Scanner sc = new Scanner(System.in);
-        String stringPort = sc.next();
-        Port = Integer.parseInt(stringPort);
+    
+    public String getLocalhost(){
+        return HostIPLocalhost;
     }
     
    public int getPort(){
         return Port;
     }
 
-    
- public static void main(String[] args)
-  {
-    System.out.println("Host IP eingeben: ");
-    setHostIP();
-    System.out.println("Port eingeben: ");
-    setPort();
-    System.out.println("Gespeicherte Verbindung:");
-    System.out.println("HostIP: "+HostIP);
-    System.out.println("Port: "+Port);
-  }
 }
 

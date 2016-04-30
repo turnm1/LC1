@@ -3,9 +3,9 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package com.sensor.loadcell;
+package com.sensor.ambientlight;
 
-import com.tinkerforge.BrickletLoadCell;
+import com.tinkerforge.BrickletAmbientLight;
 import com.tinkerforge.IPConnection;
 import com.communication.MQTTCommunication;
 import com.communication.MQTTParameters;
@@ -21,22 +21,25 @@ import org.eclipse.paho.client.mqttv3.MqttMessage;
  *
  * @author Turna
  */
-public class ServiceLoadCell implements MqttCallback{
-  
-    private static final String UID = "vdT"; // Change to your UID
+public class ServiceAmbientLight2 implements MqttCallback{
+
+    private final MQTTCommunication communication;   
     
-    public final static String BASE_SENSOR_ID = "Load Cell";
+    private static final String UID = "m1L"; // Change to your UID
+   
+    
+        public final static String BASE_SENSOR_ID = "Ambient Light";
         public final static String CLIENT_ID = BASE_SENSOR_ID+"/"+UID;
         public final static String STATUS_TOPIC = CLIENT_ID + "/status";
         public final static String STATUS_TOPIC_CONNECTION = STATUS_TOPIC + "/connection";
         public final static String STATUS_CONNECTION_OFFLINE="offline";
         public final static String STATUS_CONNECTION_ONLINE="online";
-
-    
-    private final MQTTCommunication communication;
-
-    
-     public ServiceLoadCell() throws MqttException {
+ 
+      
+    /*
+    Fixre addService() code
+    */
+     public ServiceAmbientLight2() throws MqttException {
         communication = new MQTTCommunication();
         MQTTParameters parameters = new MQTTParameters();
         parameters.setClientID(CLIENT_ID);
@@ -51,7 +54,7 @@ public class ServiceLoadCell implements MqttCallback{
         communication.publishActualWill(STATUS_CONNECTION_ONLINE.getBytes());
         communication.subscribe(BASE_SENSOR_ID+"/#", 0);
         parameters.getLastWillMessage();
-        
+
     }
 
     @Override
@@ -71,33 +74,34 @@ public class ServiceLoadCell implements MqttCallback{
 
     
     
-    
+    /*
+    Variabler Code unterschiedlich zur Sensor_typ
+    */
     // Note: To make the example code cleaner we do not handle exceptions. Exceptions
     //       you might normally want to catch are described in the documentation
     public static void main(String[] args) throws MqttException, Exception {
         
-        ServiceLoadCell service=new ServiceLoadCell();
-                
-        
-              IPConnection ipcon = new IPConnection();
+                ServiceAmbientLight2 service=new ServiceAmbientLight2();
+                          
+                IPConnection ipcon = new IPConnection();
                 HostConnection hc = new HostConnection();
                 String HOST = hc.getHostIP();
                 int PORT = hc.getPort();     
                 ipcon.connect(HOST, PORT); // Connect to brickd
                 // Don't use device before ipcon is connected
                 
-		BrickletLoadCell lc = new BrickletLoadCell(UID, ipcon); // Create device object
+                BrickletAmbientLight al = new BrickletAmbientLight(UID, ipcon); // Create device object
 
+		// Get threshold callbacks with a debounce time of 10 seconds (10000ms)
+		al.setDebouncePeriod(10000);
 
-		// Get threshold callbacks with a debounce time of 1 second (1000ms)
-		lc.setDebouncePeriod(1000);
-
-		// Add weight reached listener (parameter has unit g)
-		lc.addWeightReachedListener(new BrickletLoadCell.WeightReachedListener() {
-			public void weightReached(int weight) {
-				System.out.println("Weight: " + weight + " g");
+		// Add illuminance reached listener (parameter has unit Lux/10)
+		al.addIlluminanceReachedListener(new BrickletAmbientLight.IlluminanceReachedListener() {
+			public void illuminanceReached(int illuminance) {
+				System.out.println("Illuminance: " + illuminance/10.0 + " Lux");
+				System.out.println("Too bright, close the curtains!");
                                 MqttMessage message=new MqttMessage();
-                                message.setPayload((""+ weight + " g").getBytes());
+                                message.setPayload((""+illuminance/10.0 + " Lux").getBytes());
                                 message.setRetained(true);
                                 message.setQos(0);
                                 service.communication.publish(CLIENT_ID+"/Value: ", message);
@@ -111,9 +115,9 @@ public class ServiceLoadCell implements MqttCallback{
 			}
 		});
 
-		// Configure threshold for weight "greater than 200 g" (unit is g)
-		lc.setWeightCallbackThreshold('>', 200, 0);
-
+		// Configure threshold for illuminance "greater than 200 Lux" (unit is Lux/10)
+		al.setIlluminanceCallbackThreshold('o', 20*10, 30*10);
+    
     }
     
 }

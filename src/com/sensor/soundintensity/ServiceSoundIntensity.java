@@ -14,7 +14,6 @@ import com.helpers.HostConnection;
 import com.sensor.temperaturIr.ServiceTemperaturIr;
 
 import java.net.URI;
-import java.util.concurrent.TimeUnit;
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
 import org.eclipse.paho.client.mqttv3.MqttCallback;
 import org.eclipse.paho.client.mqttv3.MqttException;
@@ -28,22 +27,18 @@ public class ServiceSoundIntensity implements MqttCallback {
     // Subscrib Pathways
     private static  ServiceTemperaturIr stir;
     private final static String SUBSCIRBE_SSI = stir.getTopic();
-    
+    	private static final String UID = "mnn"; // Change to your UID
+        
     // ServiceSoundIntensity Pathways
-    public final static String SENSOR_TYP = "Sound Intensity"; 
-    public final static String CLIENT_ID = "SI_01";
-    public final static String BASE_SENSOR_ID = "/"+CLIENT_ID;
-    public final static String STATUS_TOPIC = SENSOR_TYP + BASE_SENSOR_ID + "/status";
-   
-    public final static String STATUS_TOPIC_CONNECTION = STATUS_TOPIC + "/connection";
-    public final static String STATUS_CONNECTION_OFFLINE="offline";
-    public final static String STATUS_CONNECTION_ONLINE="online";
+    public final static String BASE_SENSOR_ID = "Sound Intensity";
+        public final static String CLIENT_ID = BASE_SENSOR_ID+"/"+UID;
+        public final static String STATUS_TOPIC = CLIENT_ID + "/status";
+        public final static String STATUS_TOPIC_CONNECTION = STATUS_TOPIC + "/connection";
+        public final static String STATUS_CONNECTION_OFFLINE="offline";
+        public final static String STATUS_CONNECTION_ONLINE="online";
     
     private final MQTTCommunication communication;
-    
-        private static final String HOST = "localhost";
-	private static final int PORT = 4223;
-	private static final String UID = "mnn"; // Change to your UID
+
     
      public ServiceSoundIntensity() throws MqttException {
         communication = new MQTTCommunication();
@@ -66,7 +61,7 @@ public class ServiceSoundIntensity implements MqttCallback {
     
      // Get the Topic Pathway for SoundIntensity
     public static String getTopic(){
-        String topicPath = SENSOR_TYP+BASE_SENSOR_ID+"/Value:";
+        String topicPath = CLIENT_ID+"/Value:";
         return topicPath;
     }
     
@@ -95,12 +90,16 @@ public class ServiceSoundIntensity implements MqttCallback {
         // New Service (Koenig)
         ServiceSoundIntensity service=new ServiceSoundIntensity();
           
-        // TinkerForge Java Code
-        IPConnection ipcon = new IPConnection(); // Create IP connection
-        BrickletSoundIntensity si = new BrickletSoundIntensity(UID, ipcon); // Create device object
+                    IPConnection ipcon = new IPConnection();
+                    HostConnection hc = new HostConnection();
+                    String HOST = hc.getLocalhost();
+                    int PORT = hc.getPort();     
+                    ipcon.connect(HOST, PORT); // Connect to brickd
+                    // Don't use device before ipcon is connected
+                    
+                    BrickletSoundIntensity si = new BrickletSoundIntensity(UID, ipcon); // Create device object
 
-                ipcon.connect(HOST, PORT); // Connect to brickd
-		// Don't use device before ipcon is connected
+                
 
 		// Get threshold callbacks with a debounce time of 1 second (1000ms)
 		si.setDebouncePeriod(1000);
@@ -116,7 +115,7 @@ public class ServiceSoundIntensity implements MqttCallback {
                                 message.setPayload((" " + intensity).getBytes());
                                 message.setRetained(true);
                                 message.setQos(0);
-                                service.communication.publish(SENSOR_TYP+BASE_SENSOR_ID+"/Value: ", message);
+                                service.communication.publish(CLIENT_ID+"/Value: ", message);
                                 
                                 
                                 DateInput di = new DateInput();
@@ -124,7 +123,7 @@ public class ServiceSoundIntensity implements MqttCallback {
                                 dateMessage.setPayload((di.getDate()).getBytes());
                                 dateMessage.setRetained(true);
                                 dateMessage.setQos(0);
-                                service.communication.publish(SENSOR_TYP+BASE_SENSOR_ID+"/Date: ", dateMessage);
+                                service.communication.publish(CLIENT_ID+"/Date: ", dateMessage);
                                                                                                                                                                                         
                                 // FALSCHER ORT - ES MUSS EINE WEITERE METHODE EXISTIEREN MIT ZEITLICHER SUBSCRIBE! HIER WIRD NUR SUBSCRIBT, WENN EIN PUBLISH GEMACHT WIRD
                                 // Subscribe via Broker from other Clients(publisher)
@@ -136,9 +135,6 @@ public class ServiceSoundIntensity implements MqttCallback {
 
 		// Configure threshold for intensity "greater than 800"
 		si.setIntensityCallbackThreshold('>', 1000, 0);
-
-		System.out.println("Press key to exit"); System.in.read();
-		ipcon.disconnect();
     }
     
   

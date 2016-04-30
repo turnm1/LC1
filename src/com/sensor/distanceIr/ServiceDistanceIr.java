@@ -10,6 +10,7 @@ import com.tinkerforge.IPConnection;
 import com.communication.MQTTCommunication;
 import com.communication.MQTTParameters;
 import com.helpers.DateInput;
+import com.helpers.HostConnection;
 
 import java.net.URI;
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
@@ -22,20 +23,17 @@ import org.eclipse.paho.client.mqttv3.MqttMessage;
  */
 public class ServiceDistanceIr implements MqttCallback{
 
-    public final static String SENSOR_TYP = "Distance IR"; 
-    public final static String CLIENT_ID = "DIR_01";
-    public final static String BASE_SENSOR_ID = "/"+CLIENT_ID;
-    public final static String STATUS_TOPIC = SENSOR_TYP + BASE_SENSOR_ID + "/status";
+    private static final String UID = "qt4"; // Change to your UID    
     
-    public final static String STATUS_TOPIC_CONNECTION = STATUS_TOPIC + "/connection";
-    public final static String STATUS_CONNECTION_OFFLINE="offline";
-    public final static String STATUS_CONNECTION_ONLINE="online";
+     public final static String BASE_SENSOR_ID = "Distanz IR";
+        public final static String CLIENT_ID = BASE_SENSOR_ID+"/"+UID;
+        public final static String STATUS_TOPIC = CLIENT_ID + "/status";
+        public final static String STATUS_TOPIC_CONNECTION = STATUS_TOPIC + "/connection";
+        public final static String STATUS_CONNECTION_OFFLINE="offline";
+        public final static String STATUS_CONNECTION_ONLINE="online";
     
     private final MQTTCommunication communication;
-    
-        private static final String HOST = "localhost";
-	private static final int PORT = 4223;
-	private static final String UID = "qt4"; // Change to your UID
+    	
     
      public ServiceDistanceIr() throws MqttException {
         communication = new MQTTCommunication();
@@ -80,12 +78,16 @@ public class ServiceDistanceIr implements MqttCallback{
         ServiceDistanceIr service=new ServiceDistanceIr();
                 
         
-                IPConnection ipcon = new IPConnection(); // Create IP connection
+                IPConnection ipcon = new IPConnection();
+                HostConnection hc = new HostConnection();
+                String HOST = hc.getLocalhost();
+                int PORT = hc.getPort();     
+                ipcon.connect(HOST, PORT); // Connect to brickd
+                // Don't use device before ipcon is connected
+                
 		BrickletDistanceIR dir = new BrickletDistanceIR(UID, ipcon); // Create device object
 
-		ipcon.connect(HOST, PORT); // Connect to brickd
-		// Don't use device before ipcon is connected
-
+		
 		// Get threshold callbacks with a debounce time of 10 seconds (10000ms)
 		dir.setDebouncePeriod(500);
 
@@ -97,7 +99,7 @@ public class ServiceDistanceIr implements MqttCallback{
                                 message.setPayload(("Passage Detected").getBytes());
                                 message.setRetained(true);
                                 message.setQos(0);
-                                service.communication.publish(SENSOR_TYP+BASE_SENSOR_ID+"/Passage: ", message);
+                                service.communication.publish(CLIENT_ID+"/Passage: ", message);
                                 
                                 
                                 DateInput di = new DateInput();
@@ -105,7 +107,7 @@ public class ServiceDistanceIr implements MqttCallback{
                                 dateMessage.setPayload((di.getDate()).getBytes());
                                 dateMessage.setRetained(true);
                                 dateMessage.setQos(0);
-                                service.communication.publish(SENSOR_TYP+BASE_SENSOR_ID+"/Date: ", dateMessage);
+                                service.communication.publish(CLIENT_ID+"/Date: ", dateMessage);
 			}
 		});
                 
@@ -119,7 +121,7 @@ public class ServiceDistanceIr implements MqttCallback{
                                 message.setPayload(("No Passage").getBytes());
                                 message.setRetained(true);
                                 message.setQos(0);
-                                service.communication.publish(SENSOR_TYP+BASE_SENSOR_ID+"/Passage: ", message);
+                                service.communication.publish(CLIENT_ID+"/Passage: ", message);
                                 
                                 
                                 DateInput di = new DateInput();
@@ -127,7 +129,7 @@ public class ServiceDistanceIr implements MqttCallback{
                                 dateMessage.setPayload((di.getDate()).getBytes());
                                 dateMessage.setRetained(true);
                                 dateMessage.setQos(0);
-                                service.communication.publish(SENSOR_TYP+BASE_SENSOR_ID+"/Date: ", dateMessage);
+                                service.communication.publish(CLIENT_ID+"/Date: ", dateMessage);
                                 }
 			}
 		});
@@ -141,8 +143,6 @@ public class ServiceDistanceIr implements MqttCallback{
 		//       if the distance has changed since the last call!
 		dir.setDistanceCallbackPeriod(200);
 
-		System.out.println("Press key to exit"); System.in.read();
-		ipcon.disconnect();
     }
     
 }

@@ -10,6 +10,7 @@ import com.tinkerforge.IPConnection;
 import com.communication.MQTTCommunication;
 import com.communication.MQTTParameters;
 import com.helpers.DateInput;
+import com.helpers.HostConnection;
 
 import java.net.URI;
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
@@ -22,20 +23,18 @@ import org.eclipse.paho.client.mqttv3.MqttMessage;
  */
 public class ServiceTemperatur implements MqttCallback{
 
-    public final static String SENSOR_TYP = "Temperatur"; 
-    public final static String CLIENT_ID = "T_01";
-    public final static String BASE_SENSOR_ID = "/"+CLIENT_ID;
-    public final static String STATUS_TOPIC = SENSOR_TYP + BASE_SENSOR_ID + "/status";
-    
-    public final static String STATUS_TOPIC_CONNECTION = STATUS_TOPIC + "/connection";
-    public final static String STATUS_CONNECTION_OFFLINE="offline";
-    public final static String STATUS_CONNECTION_ONLINE="online";
+    	private static final String UID = "qvy"; // Change to your UID
+        
+ public final static String BASE_SENSOR_ID = "Temperatur";
+        public final static String CLIENT_ID = BASE_SENSOR_ID+"/"+UID;
+        public final static String STATUS_TOPIC = CLIENT_ID + "/status";
+        public final static String STATUS_TOPIC_CONNECTION = STATUS_TOPIC + "/connection";
+        public final static String STATUS_CONNECTION_OFFLINE="offline";
+        public final static String STATUS_CONNECTION_ONLINE="online";
     
     private final MQTTCommunication communication;
-    
-        private static final String HOST = "localhost";
-	private static final int PORT = 4223;
-	private static final String UID = "qvy"; // Change to your UID
+
+
     
      public ServiceTemperatur() throws MqttException {
         communication = new MQTTCommunication();
@@ -79,12 +78,14 @@ public class ServiceTemperatur implements MqttCallback{
         
         ServiceTemperatur service=new ServiceTemperatur();
                 
-        
-               IPConnection ipcon = new IPConnection(); // Create IP connection
+        IPConnection ipcon = new IPConnection();
+                    HostConnection hc = new HostConnection();
+                    String HOST = hc.getLocalhost();
+                    int PORT = hc.getPort();     
+                    ipcon.connect(HOST, PORT); // Connect to brickd
+                    // Don't use device before ipcon is connected
 		BrickletTemperature t = new BrickletTemperature(UID, ipcon); // Create device object
 
-		ipcon.connect(HOST, PORT); // Connect to brickd
-		// Don't use device before ipcon is connected
 
 		// Add temperature reached listener (parameter has unit °C/100)
 		t.addTemperatureReachedListener(new BrickletTemperature.TemperatureReachedListener() {
@@ -94,14 +95,14 @@ public class ServiceTemperatur implements MqttCallback{
                                 message.setPayload((" " + temperature/100.0 + " °C").getBytes());
                                 message.setRetained(true);
                                 message.setQos(0);
-                                service.communication.publish(SENSOR_TYP+BASE_SENSOR_ID+"/Value: ", message);
+                                service.communication.publish(CLIENT_ID+"/Value: ", message);
                                 
                                 DateInput di = new DateInput();
                                 MqttMessage dateMessage = new MqttMessage();
                                 dateMessage.setPayload((di.getDate()).getBytes());
                                 dateMessage.setRetained(true);
                                 dateMessage.setQos(0);
-                                service.communication.publish(SENSOR_TYP+BASE_SENSOR_ID+"/Date: ", dateMessage);
+                                service.communication.publish(CLIENT_ID+"/Date: ", dateMessage);
 			}
 		});
 
@@ -111,8 +112,6 @@ public class ServiceTemperatur implements MqttCallback{
                 // Get threshold callbacks with a debounce time of 10 seconds (10000ms)
 		t.setDebouncePeriod(10000);
 
-		System.out.println("Press key to exit"); System.in.read();
-		ipcon.disconnect();
     }
     
 }
