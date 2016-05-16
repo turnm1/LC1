@@ -24,9 +24,10 @@ import org.eclipse.paho.client.mqttv3.MqttMessage;
 public class ServiceDistanceUs implements MqttCallback{
 
 	private static final String UID = "qSG"; // Change to your UID
+        private static final String ROOM = "Zimmer";
         
         public final static String BASE_SENSOR_ID = "Distance US";
-        public final static String CLIENT_ID = BASE_SENSOR_ID+"/"+UID;
+        public final static String CLIENT_ID = BASE_SENSOR_ID+"/"+ROOM+"/"+UID;
         public final static String STATUS_TOPIC = CLIENT_ID + "/status";
         public final static String STATUS_TOPIC_CONNECTION = STATUS_TOPIC + "/connection";
         public final static String STATUS_CONNECTION_OFFLINE="offline";
@@ -53,6 +54,23 @@ public class ServiceDistanceUs implements MqttCallback{
         parameters.getLastWillMessage();
 
     }
+     
+     // Get the Topic Pathway for DistanceUs
+    public static String getTopicValue(){
+       String value = CLIENT_ID+"/Value:";
+       return value;
+    }
+    
+    public static String getTopicDate(){
+       String date = CLIENT_ID+"/Date:";
+       return date;
+    }
+    
+    public static String getTopicStatus(){
+        String status = STATUS_TOPIC_CONNECTION;
+        return status;
+    }
+
 
     @Override
     public void connectionLost(Throwable thrwbl) {
@@ -99,14 +117,14 @@ public class ServiceDistanceUs implements MqttCallback{
                                 message.setPayload(("Distance Value: " + distance).getBytes());
                                 message.setRetained(true);
                                 message.setQos(0);
-                                service.communication.publish(CLIENT_ID+"/Value: ", message);
+                                service.communication.publish(getTopicValue(), message);
                                 
                                 DateInput di = new DateInput();
                                 MqttMessage dateMessage = new MqttMessage();
                                 dateMessage.setPayload((di.getDate()).getBytes());
                                 dateMessage.setRetained(true);
                                 dateMessage.setQos(0);
-                                service.communication.publish(CLIENT_ID+"/Date: ", dateMessage);
+                                service.communication.publish(getTopicValue(), dateMessage);
 			}
 		});
 

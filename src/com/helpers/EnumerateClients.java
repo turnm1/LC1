@@ -10,7 +10,7 @@ public class EnumerateClients {
 		
             IPConnection ipcon = new IPConnection();
                 HostConnection hc = new HostConnection();
-                String HOST = hc.getHostIP();
+                String HOST = hc.getLocalhost();
                 int PORT = hc.getPort();     
                 ipcon.connect(HOST, PORT); // Connect to brickd
                 // Don't use device before ipcon is connected

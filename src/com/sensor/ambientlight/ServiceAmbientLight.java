@@ -55,6 +55,12 @@ public class ServiceAmbientLight implements MqttCallback{
         parameters.getLastWillMessage();
 
     }
+     
+     // Get the Topic Pathway for AmbienteLight
+     public static String getTopic(){
+        String topicPath = CLIENT_ID+"/Value:";
+        return topicPath;
+    }
 
     @Override
     public void connectionLost(Throwable thrwbl) {

@@ -11,6 +11,7 @@ import com.communication.MQTTCommunication;
 import com.communication.MQTTParameters;
 import com.helpers.DateInput;
 import com.helpers.HostConnection;
+import com.helpers.Room;
 
 import java.net.URI;
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
@@ -24,9 +25,10 @@ import org.eclipse.paho.client.mqttv3.MqttMessage;
 public class ServiceTemperaturIr implements MqttCallback{
 
     	private static final String UID = "qCb"; // Change to your UID
+        private final static String ROOM = "Zimmer";
         
   public final static String BASE_SENSOR_ID = "Temperatur IR";
-        public final static String CLIENT_ID = BASE_SENSOR_ID+"/"+UID;
+        public final static String CLIENT_ID = BASE_SENSOR_ID+"/"+ROOM+"/"+UID;
         public final static String STATUS_TOPIC = CLIENT_ID + "/status";
         public final static String STATUS_TOPIC_CONNECTION = STATUS_TOPIC + "/connection";
         public final static String STATUS_CONNECTION_OFFLINE="offline";
@@ -54,9 +56,19 @@ public class ServiceTemperaturIr implements MqttCallback{
     }
 
        // Get the Topic Pathway for TemperaturIr
-    public static String getTopic(){
-       String topicPath = CLIENT_ID+"/Value:";
-       return topicPath;
+    public static String getTopicValue(){
+       String value = CLIENT_ID+"/Value:";
+       return value;
+    }
+    
+    public static String getTopicDate(){
+       String date = CLIENT_ID+"/Date:";
+       return date;
+    }
+    
+    public static String getTopicStatus(){
+        String status = STATUS_TOPIC_CONNECTION;
+        return status;
     }
        
     @Override
@@ -92,34 +104,29 @@ public class ServiceTemperaturIr implements MqttCallback{
                     
 		BrickletTemperatureIR tir = new BrickletTemperatureIR(UID, ipcon); // Create device object
 
-		// Add object temperature reached listener (parameter has unit °C/10)
-		tir.addObjectTemperatureReachedListener(new BrickletTemperatureIR.ObjectTemperatureReachedListener() {
-			public void objectTemperatureReached(short temperature) {
+		// Add object temperature listener (parameter has unit °C/10)
+		tir.addObjectTemperatureListener(new BrickletTemperatureIR.ObjectTemperatureListener() {
+			public void objectTemperature(short temperature) {
 				System.out.println("Object Temperature: " + temperature/10.0 + " °C");
                                 MqttMessage message=new MqttMessage();
-                                message.setPayload((" " + temperature/10.0 + " °C").getBytes());
+                                message.setPayload((temperature/10.0 + " °C").getBytes());
                                 message.setRetained(true);
                                 message.setQos(0);
-                                service.communication.publish(CLIENT_ID+"/Value: ", message);
+                                service.communication.publish(getTopicValue(), message);
                                 
                                 DateInput di = new DateInput();
                                 MqttMessage dateMessage = new MqttMessage();
                                 dateMessage.setPayload((di.getDate()).getBytes());
                                 dateMessage.setRetained(true);
                                 dateMessage.setQos(0);
-                                service.communication.publish(CLIENT_ID+"/Date: ", dateMessage);
+                                service.communication.publish(getTopicDate(), dateMessage);
+                                
 				}
 		});
 
-		// Configure threshold for object temperature "greater than 100 °C" (unit is °C/10)
-		tir.setObjectTemperatureCallbackThreshold('>', (short)(10*10), (short)0);
-                
-                // Set emissivity to 0.98 (emissivity of water, 65535 * 0.98 = 64224.299)
-		tir.setEmissivity(64224);
-
-		// Get threshold callbacks with a debounce time of 10 seconds (10000ms)
-		tir.setDebouncePeriod(1000);
-
+		// Set period for object temperature callback to 1s (1000ms)
+		// Note: The object temperature callback is only called every second
+		//       if the object temperature has changed since the last call!
+		tir.setObjectTemperatureCallbackPeriod(10000);
 	}
     }
-    

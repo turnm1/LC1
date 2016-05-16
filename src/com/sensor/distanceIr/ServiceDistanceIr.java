@@ -23,10 +23,11 @@ import org.eclipse.paho.client.mqttv3.MqttMessage;
  */
 public class ServiceDistanceIr implements MqttCallback{
 
-    private static final String UID = "qt4"; // Change to your UID    
+    private static final String UID = "qt4"; // Change to your UID   
+    private static final String ROOM = "Zimmer";
     
      public final static String BASE_SENSOR_ID = "Distanz IR";
-        public final static String CLIENT_ID = BASE_SENSOR_ID+"/"+UID;
+        public final static String CLIENT_ID = BASE_SENSOR_ID+"/"+ROOM+"/"+UID;
         public final static String STATUS_TOPIC = CLIENT_ID + "/status";
         public final static String STATUS_TOPIC_CONNECTION = STATUS_TOPIC + "/connection";
         public final static String STATUS_CONNECTION_OFFLINE="offline";
@@ -51,6 +52,22 @@ public class ServiceDistanceIr implements MqttCallback{
         communication.subscribe(BASE_SENSOR_ID+"/#", 0);
         parameters.getLastWillMessage();
 
+    }
+     
+     // Get the Topic Pathway for DistanceIr
+    public static String getTopicValue(){
+       String value = CLIENT_ID+"/Value:";
+       return value;
+    }
+    
+    public static String getTopicDate(){
+       String date = CLIENT_ID+"/Date:";
+       return date;
+    }
+    
+    public static String getTopicStatus(){
+        String status = STATUS_TOPIC_CONNECTION;
+        return status;
     }
 
     @Override
@@ -99,7 +116,7 @@ public class ServiceDistanceIr implements MqttCallback{
                                 message.setPayload(("Passage Detected").getBytes());
                                 message.setRetained(true);
                                 message.setQos(0);
-                                service.communication.publish(CLIENT_ID+"/Passage: ", message);
+                                service.communication.publish(getTopicValue(), message);
                                 
                                 
                                 DateInput di = new DateInput();
@@ -107,7 +124,7 @@ public class ServiceDistanceIr implements MqttCallback{
                                 dateMessage.setPayload((di.getDate()).getBytes());
                                 dateMessage.setRetained(true);
                                 dateMessage.setQos(0);
-                                service.communication.publish(CLIENT_ID+"/Date: ", dateMessage);
+                                service.communication.publish(getTopicDate(), dateMessage);
 			}
 		});
                 

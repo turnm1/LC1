@@ -11,6 +11,7 @@ import com.communication.MQTTCommunication;
 import com.communication.MQTTParameters;
 import com.helpers.DateInput;
 import com.helpers.HostConnection;
+import com.helpers.Room;
 import com.sensor.temperaturIr.ServiceTemperaturIr;
 
 import java.net.URI;
@@ -25,13 +26,15 @@ import org.eclipse.paho.client.mqttv3.MqttMessage;
 public class ServiceSoundIntensity implements MqttCallback {
 
     // Subscrib Pathways
-    private static  ServiceTemperaturIr stir;
-    private final static String SUBSCIRBE_SSI = stir.getTopic();
-    	private static final String UID = "mnn"; // Change to your UID
+    //private static  ServiceTemperaturIr stir;
+    //private final static String SUBSCIRBE_SSI = stir.getTopic();
+    
+    private static final String UID = "mnn"; // Change to your UID
+    private static final String ROOM  = "Schlafzimmer";
         
     // ServiceSoundIntensity Pathways
     public final static String BASE_SENSOR_ID = "Sound Intensity";
-        public final static String CLIENT_ID = BASE_SENSOR_ID+"/"+UID;
+        public final static String CLIENT_ID = BASE_SENSOR_ID+"/"+ROOM+"/"+UID;
         public final static String STATUS_TOPIC = CLIENT_ID + "/status";
         public final static String STATUS_TOPIC_CONNECTION = STATUS_TOPIC + "/connection";
         public final static String STATUS_CONNECTION_OFFLINE="offline";
@@ -56,13 +59,24 @@ public class ServiceSoundIntensity implements MqttCallback {
         communication.subscribe(BASE_SENSOR_ID+"/#", 0);
         parameters.getLastWillMessage();
 
+
        
     }
     
      // Get the Topic Pathway for SoundIntensity
-    public static String getTopic(){
-        String topicPath = CLIENT_ID+"/Value:";
-        return topicPath;
+   public static String getTopicValue(){
+       String value = CLIENT_ID+"/Value:";
+       return value;
+    }
+    
+    public static String getTopicDate(){
+       String date = CLIENT_ID+"/Date:";
+       return date;
+    }
+    
+    public static String getTopicStatus(){
+        String status = STATUS_TOPIC_CONNECTION;
+        return status;
     }
     
      
@@ -106,16 +120,18 @@ public class ServiceSoundIntensity implements MqttCallback {
 
 		// Add intensity reached listener
 		si.addIntensityReachedListener(new BrickletSoundIntensity.IntensityReachedListener() {
-		
+                            
                                         
                         public void intensityReached(int intensity) {
+                            
+                                                       
 				System.out.println("Intensity: " + intensity);
                                 
                                 MqttMessage message = new MqttMessage();
                                 message.setPayload((" " + intensity).getBytes());
                                 message.setRetained(true);
                                 message.setQos(0);
-                                service.communication.publish(CLIENT_ID+"/Value: ", message);
+                                service.communication.publish(getTopicValue(), message);
                                 
                                 
                                 DateInput di = new DateInput();
@@ -123,18 +139,20 @@ public class ServiceSoundIntensity implements MqttCallback {
                                 dateMessage.setPayload((di.getDate()).getBytes());
                                 dateMessage.setRetained(true);
                                 dateMessage.setQos(0);
-                                service.communication.publish(CLIENT_ID+"/Date: ", dateMessage);
+                                service.communication.publish(getTopicDate(), dateMessage);
                                                                                                                                                                                         
                                 // FALSCHER ORT - ES MUSS EINE WEITERE METHODE EXISTIEREN MIT ZEITLICHER SUBSCRIBE! HIER WIRD NUR SUBSCRIBT, WENN EIN PUBLISH GEMACHT WIRD
                                 // Subscribe via Broker from other Clients(publisher)
                                 // service.communication.subscribe(SUBSCIRBE_SSI, 0);
-                               
-                                      
+                                
 			}
 		});
+                
 
 		// Configure threshold for intensity "greater than 800"
 		si.setIntensityCallbackThreshold('>', 1000, 0);
+                
+                
     }
     
   
