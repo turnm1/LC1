@@ -3,9 +3,9 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package com.sensor.co2;
+package com.sensor.motiondetector;
 
-import com.tinkerforge.BrickletCO2;
+import com.tinkerforge.BrickletMotionDetector;
 import com.tinkerforge.IPConnection;
 import com.communication.MQTTCommunication;
 import com.communication.MQTTParameters;
@@ -21,22 +21,23 @@ import org.eclipse.paho.client.mqttv3.MqttMessage;
  *
  * @author Turna
  */
-public class ServiceCo2 implements MqttCallback{
+public class ServiceMotiondetector3 implements MqttCallback{
 
-        private static final String UID = "x71"; // Change to your UID
-        private final static String ROOM = "Wohnungseingang";
+    	private static final String UID = "qtu"; // Change to your UID
+        private static final String ROOM ="WC";
         
-        public final static String BASE_SENSOR_ID = "CO2";
+  public final static String BASE_SENSOR_ID = "Motion Detector";
         public final static String CLIENT_ID = BASE_SENSOR_ID+"/"+ROOM+"/"+UID;
         public final static String STATUS_TOPIC = CLIENT_ID + "/status";
         public final static String STATUS_TOPIC_CONNECTION = STATUS_TOPIC + "/connection";
         public final static String STATUS_CONNECTION_OFFLINE="offline";
         public final static String STATUS_CONNECTION_ONLINE="online";
 
-        private final MQTTCommunication communication;
     
-        
-     public ServiceCo2() throws MqttException {
+    private final MQTTCommunication communication;
+    
+    
+     public ServiceMotiondetector3() throws MqttException {
         communication = new MQTTCommunication();
         MQTTParameters parameters = new MQTTParameters();
         parameters.setClientID(CLIENT_ID);
@@ -53,9 +54,9 @@ public class ServiceCo2 implements MqttCallback{
         parameters.getLastWillMessage();
 
     }
-
-     // Get the Topic Pathway for Co2
-   public static String getTopicValue(){
+     
+     // Get the Topic Pathway for Motiondetector
+    public static String getTopicValue(){
        String value = CLIENT_ID+"/Value:";
        return value;
     }
@@ -69,7 +70,7 @@ public class ServiceCo2 implements MqttCallback{
         String status = STATUS_TOPIC_CONNECTION;
         return status;
     }
-     
+
     @Override
     public void connectionLost(Throwable thrwbl) {
         System.out.println("Ouups, lost connection to subscirptions");
@@ -77,23 +78,23 @@ public class ServiceCo2 implements MqttCallback{
 
     @Override
     public void messageArrived(String string, MqttMessage mm) throws Exception {
-        System.out.printf("Message has been delivered and is back again. Topic: %s, Message: %s \n", string, new String(mm.getPayload()));
+      //  System.out.printf("Message has been delivered and is back again. Topic: %s, Message: %s \n", string, new String(mm.getPayload()));
     }
 
     @Override
     public void deliveryComplete(IMqttDeliveryToken imdt) {
         System.out.println("Delivery is done.");
     }
-
-    
-    
+   
+ 
     
     // Note: To make the example code cleaner we do not handle exceptions. Exceptions
     //       you might normally want to catch are described in the documentation
     public static void main(String[] args) throws MqttException, Exception {
         
-        ServiceCo2 service = new ServiceCo2();
-                
+                ServiceMotiondetector3 service=new ServiceMotiondetector3();
+                               
+        
                 IPConnection ipcon = new IPConnection();
                 HostConnection hc = new HostConnection();
                 String HOST = hc.getLocalhost();
@@ -101,38 +102,37 @@ public class ServiceCo2 implements MqttCallback{
                 ipcon.connect(HOST, PORT); // Connect to brickd
                 // Don't use device before ipcon is connected
                 
-		BrickletCO2 co2 = new BrickletCO2(UID, ipcon); // Create device object
+		BrickletMotionDetector md = new BrickletMotionDetector(UID, ipcon); // Create device object
 
+              
+		// Add motion detected listener
+		md.addMotionDetectedListener(new BrickletMotionDetector.MotionDetectedListener() {
+			public void motionDetected() {
 
-		// Add CO2 concentration listener (parameter has unit ppm)
-		co2.addCO2ConcentrationListener(new BrickletCO2.CO2ConcentrationListener() {
-			public void co2Concentration(int co2Concentration) {
-				
+                            DateInput di = new DateInput();
+                            MqttMessage message=new MqttMessage();
+                            message.setPayload(("Motion Detected" + "/" + di.getDate()).getBytes());
+                            message.setRetained(true);
+                            message.setQos(0);
+                            service.communication.publish(getTopicValue(), message);
                            
-                                MqttMessage message=new MqttMessage();
-                                DateInput di = new DateInput();
-                                message.setRetained(true);
-                                message.setQos(0);
-                                
-                                if(co2Concentration >= 800){
-                                    message.setPayload(("normal" + "/" + di.getDate()).getBytes());
-                                    service.communication.publish(getTopicValue(), message);
-                                } else if (co2Concentration < 800){
-                                    message.setPayload(("hoch" + "/" + di.getDate()).getBytes());
-                                    service.communication.publish(getTopicValue(), message);
-                                }
-                                
-                                
-                                
-			}
+                        }
 		});
+                
+              
+		// Add detection cycle ended listener
+		md.addDetectionCycleEndedListener(new BrickletMotionDetector.DetectionCycleEndedListener() {
+			public void detectionCycleEnded() {
 
-		// Set period for CO2 concentration callback to 1min = 60000 (1000ms = 1sek)
-		// Note: The CO2 concentration callback is only called every second
-		//       if the CO2 concentration has changed since the last call!
-		co2.setCO2ConcentrationCallbackPeriod(60000);
-
-		
+                            DateInput di = new DateInput();
+                            MqttMessage message=new MqttMessage();
+                            message.setPayload(("Motion Ended" + "/" + di.getDate()).getBytes());
+                            message.setRetained(true);
+                            message.setQos(0);
+                            service.communication.publish(getTopicValue(), message);
+                            
+                         }
+		});        
     }
     
 }

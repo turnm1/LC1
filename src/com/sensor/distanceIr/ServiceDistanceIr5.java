@@ -3,9 +3,9 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package com.sensor.co2;
+package com.sensor.distanceIr;
 
-import com.tinkerforge.BrickletCO2;
+import com.tinkerforge.BrickletDistanceIR;
 import com.tinkerforge.IPConnection;
 import com.communication.MQTTCommunication;
 import com.communication.MQTTParameters;
@@ -21,22 +21,22 @@ import org.eclipse.paho.client.mqttv3.MqttMessage;
  *
  * @author Turna
  */
-public class ServiceCo2 implements MqttCallback{
+public class ServiceDistanceIr5 implements MqttCallback{
 
-        private static final String UID = "x71"; // Change to your UID
-        private final static String ROOM = "Wohnungseingang";
-        
-        public final static String BASE_SENSOR_ID = "CO2";
+    private static final String UID = "tJo"; // Change to your UID   
+    private static final String ROOM = "Küche";
+    
+     public final static String BASE_SENSOR_ID = "Distanz IR";
         public final static String CLIENT_ID = BASE_SENSOR_ID+"/"+ROOM+"/"+UID;
         public final static String STATUS_TOPIC = CLIENT_ID + "/status";
         public final static String STATUS_TOPIC_CONNECTION = STATUS_TOPIC + "/connection";
         public final static String STATUS_CONNECTION_OFFLINE="offline";
         public final static String STATUS_CONNECTION_ONLINE="online";
-
-        private final MQTTCommunication communication;
     
-        
-     public ServiceCo2() throws MqttException {
+    private final MQTTCommunication communication;
+    	
+    
+     public ServiceDistanceIr5() throws MqttException {
         communication = new MQTTCommunication();
         MQTTParameters parameters = new MQTTParameters();
         parameters.setClientID(CLIENT_ID);
@@ -53,9 +53,9 @@ public class ServiceCo2 implements MqttCallback{
         parameters.getLastWillMessage();
 
     }
-
-     // Get the Topic Pathway for Co2
-   public static String getTopicValue(){
+     
+     // Get the Topic Pathway for DistanceIr
+    public static String getTopicValue(){
        String value = CLIENT_ID+"/Value:";
        return value;
     }
@@ -69,7 +69,7 @@ public class ServiceCo2 implements MqttCallback{
         String status = STATUS_TOPIC_CONNECTION;
         return status;
     }
-     
+
     @Override
     public void connectionLost(Throwable thrwbl) {
         System.out.println("Ouups, lost connection to subscirptions");
@@ -77,7 +77,7 @@ public class ServiceCo2 implements MqttCallback{
 
     @Override
     public void messageArrived(String string, MqttMessage mm) throws Exception {
-        System.out.printf("Message has been delivered and is back again. Topic: %s, Message: %s \n", string, new String(mm.getPayload()));
+      //  System.out.printf("Message has been delivered and is back again. Topic: %s, Message: %s \n", string, new String(mm.getPayload()));
     }
 
     @Override
@@ -92,8 +92,9 @@ public class ServiceCo2 implements MqttCallback{
     //       you might normally want to catch are described in the documentation
     public static void main(String[] args) throws MqttException, Exception {
         
-        ServiceCo2 service = new ServiceCo2();
+        ServiceDistanceIr5 service=new ServiceDistanceIr5();
                 
+        
                 IPConnection ipcon = new IPConnection();
                 HostConnection hc = new HostConnection();
                 String HOST = hc.getLocalhost();
@@ -101,38 +102,40 @@ public class ServiceCo2 implements MqttCallback{
                 ipcon.connect(HOST, PORT); // Connect to brickd
                 // Don't use device before ipcon is connected
                 
-		BrickletCO2 co2 = new BrickletCO2(UID, ipcon); // Create device object
+		BrickletDistanceIR dir = new BrickletDistanceIR(UID, ipcon); // Create device object
 
+		
+		// Get threshold callbacks with a debounce time of 10 seconds (10000ms)
+		dir.setDebouncePeriod(500);
 
-		// Add CO2 concentration listener (parameter has unit ppm)
-		co2.addCO2ConcentrationListener(new BrickletCO2.CO2ConcentrationListener() {
-			public void co2Concentration(int co2Concentration) {
-				
-                           
+		// Add distance reached listener (parameter has unit mm)
+				dir.addDistanceListener(new BrickletDistanceIR.DistanceListener() {
+			public void distance(int distance) {
                                 MqttMessage message=new MqttMessage();
-                                DateInput di = new DateInput();
                                 message.setRetained(true);
                                 message.setQos(0);
                                 
-                                if(co2Concentration >= 800){
-                                    message.setPayload(("normal" + "/" + di.getDate()).getBytes());
-                                    service.communication.publish(getTopicValue(), message);
-                                } else if (co2Concentration < 800){
-                                    message.setPayload(("hoch" + "/" + di.getDate()).getBytes());
-                                    service.communication.publish(getTopicValue(), message);
-                                }
-                                
-                                
-                                
+                                DateInput di = new DateInput();
+ 
+                            if (distance <= 790){
+                                message.setPayload(("Passage Detected" + "/" + di.getDate()).getBytes());
+                                service.communication.publish(getTopicValue(), message);
+                                } else {
+                                message.setPayload(("No Passage" + "/" + di.getDate()).getBytes());
+                                service.communication.publish(getTopicValue(), message);
+                                }  
 			}
 		});
+                                
+                
+		// Configure threshold for distance "smaller than 30 cm" (unit is mm)
+	//	dir.setDistanceCallbackThreshold('i', 5*10, 50*10);
+                
+                // Set period for distance callback to 0.2s (200ms)
+		// Note: The distance callback is only called every 0.2 seconds
+		//       if the distance has changed since the last call!
+		dir.setDistanceCallbackPeriod(2000);
 
-		// Set period for CO2 concentration callback to 1min = 60000 (1000ms = 1sek)
-		// Note: The CO2 concentration callback is only called every second
-		//       if the CO2 concentration has changed since the last call!
-		co2.setCO2ConcentrationCallbackPeriod(60000);
-
-		
     }
     
 }

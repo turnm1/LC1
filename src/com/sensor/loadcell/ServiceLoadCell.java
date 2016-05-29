@@ -23,8 +23,8 @@ import org.eclipse.paho.client.mqttv3.MqttMessage;
  */
 public class ServiceLoadCell implements MqttCallback{
   
-    private static final String UID = "vdT"; // Change to your UID
-    private static final String ROOM = "Zimmer";
+    private static final String UID = "vdv"; // Change to your UID
+    private static final String ROOM = "Schlafzimmer";
     
     public final static String BASE_SENSOR_ID = "Load Cell";
         public final static String CLIENT_ID = BASE_SENSOR_ID+"/"+ROOM+"/"+UID;
@@ -112,24 +112,26 @@ public class ServiceLoadCell implements MqttCallback{
 		// Add weight reached listener (parameter has unit g)
 		lc.addWeightReachedListener(new BrickletLoadCell.WeightReachedListener() {
 			public void weightReached(int weight) {
-				System.out.println("Weight: " + weight + " g");
-                                MqttMessage message=new MqttMessage();
-                                message.setPayload((""+ weight + " g").getBytes());
-                                message.setRetained(true);
-                                message.setQos(0);
+                            
+                            MqttMessage message=new MqttMessage();
+                            DateInput di = new DateInput();
+                            message.setRetained(true);
+                            message.setQos(0);
+                            
+                            if (weight >= 200){
+                                message.setPayload(("sitzt/liegt" + "/" + di.getDate()).getBytes());
                                 service.communication.publish(getTopicValue(), message);
+                            } else if (weight < 200){
+                                message.setPayload(("aufgestanden" + "/" + di.getDate()).getBytes());
+                                service.communication.publish(getTopicValue(), message);
+                            }
+                            
                                 
-                                DateInput di = new DateInput();
-                                MqttMessage dateMessage = new MqttMessage();
-                                dateMessage.setPayload((di.getDate()).getBytes());
-                                dateMessage.setRetained(true);
-                                dateMessage.setQos(0);
-                                service.communication.publish(getTopicDate(), dateMessage);
 			}
 		});
 
 		// Configure threshold for weight "greater than 200 g" (unit is g)
-		lc.setWeightCallbackThreshold('>', 200, 0);
+		lc.setWeightCallbackThreshold('>', 16788000, 0);
 
     }
     

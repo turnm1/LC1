@@ -10,6 +10,8 @@ import com.tinkerforge.IPConnection;
 import com.communication.MQTTCommunication;
 import com.communication.MQTTParameters;
 import com.helpers.DateInput;
+import com.helpers.HostConnection;
+import com.tinkerforge.BrickletAmbientLightV2;
 
 import java.net.URI;
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
@@ -22,22 +24,25 @@ import org.eclipse.paho.client.mqttv3.MqttMessage;
  */
 public class ServiceAmbientLight implements MqttCallback{
 
+    private final MQTTCommunication communication;   
+    
+    private static final String UID = "m1L"; // Change to your UID
+    private final static String ROOM = "Wohnungseingang";
+ 
+    
+        public final static String BASE_SENSOR_ID = "Ambient Light";
+        public final static String CLIENT_ID = BASE_SENSOR_ID+"/"+ROOM+"/"+UID;
+        public final static String STATUS_TOPIC = CLIENT_ID + "/status";
+        public final static String STATUS_TOPIC_CONNECTION = STATUS_TOPIC + "/connection";
+        public final static String STATUS_CONNECTION_OFFLINE="offline";
+        public final static String STATUS_CONNECTION_ONLINE="online";
+ 
+        public final static int offValue = 50;
+        public final static int onValue = 170;
       
-    public final static String SENSOR_TYP = "AmbientLight"; 
-    public final static String CLIENT_ID = "AL_01";
-    public final static String BASE_SENSOR_ID = "/"+CLIENT_ID;
-    public final static String STATUS_TOPIC = SENSOR_TYP + BASE_SENSOR_ID + "/status";
-    
-    public final static String STATUS_TOPIC_CONNECTION = STATUS_TOPIC + "/connection";
-    public final static String STATUS_CONNECTION_OFFLINE="offline";
-    public final static String STATUS_CONNECTION_ONLINE="online";
-    
-    private final MQTTCommunication communication;
-    
-        private static final String HOST = "192.168.1.16";
-	private static final int PORT = 4223;
-	private static final String UID = "m1L"; // Change to your UID
-    
+    /*
+    Fixre addService() code
+    */
      public ServiceAmbientLight() throws MqttException {
         communication = new MQTTCommunication();
         MQTTParameters parameters = new MQTTParameters();
@@ -57,9 +62,19 @@ public class ServiceAmbientLight implements MqttCallback{
     }
      
      // Get the Topic Pathway for AmbienteLight
-     public static String getTopic(){
-        String topicPath = CLIENT_ID+"/Value:";
-        return topicPath;
+     public static String getTopicValue(){
+       String value = CLIENT_ID+"/Value:";
+       return value;
+    }
+    
+    public static String getTopicDate(){
+       String date = CLIENT_ID+"/Date:";
+       return date;
+    }
+    
+    public static String getTopicStatus(){
+        String status = STATUS_TOPIC_CONNECTION;
+        return status;
     }
 
     @Override
@@ -69,7 +84,7 @@ public class ServiceAmbientLight implements MqttCallback{
 
     @Override
     public void messageArrived(String string, MqttMessage mm) throws Exception {
-        System.out.printf("Message has been delivered and is back again. Topic: %s, Message: %s \n", string, new String(mm.getPayload()));
+      // System.out.printf("Message has been delivered and is back again. Topic: %s, Message: %s \n", string, new String(mm.getPayload()));
     }
 
     @Override
@@ -79,50 +94,53 @@ public class ServiceAmbientLight implements MqttCallback{
 
     
     
-    
+    /*
+    Variabler Code unterschiedlich zur Sensor_typ
+    */
     // Note: To make the example code cleaner we do not handle exceptions. Exceptions
     //       you might normally want to catch are described in the documentation
     public static void main(String[] args) throws MqttException, Exception {
         
-        ServiceAmbientLight service=new ServiceAmbientLight();
+                ServiceAmbientLight service=new ServiceAmbientLight();
+                          
+                IPConnection ipcon = new IPConnection();
+                HostConnection hc = new HostConnection();
+                String HOST = hc.getLocalhost();
+                int PORT = hc.getPort();     
+                ipcon.connect(HOST, PORT); // Connect to brickd
+                // Don't use device before ipcon is connected
                 
-        
-               IPConnection ipcon = new IPConnection(); // Create IP connection
-		BrickletAmbientLight al = new BrickletAmbientLight(UID, ipcon); // Create device object
-
-		ipcon.connect(HOST, PORT); // Connect to brickd
-		// Don't use device before ipcon is connected
-
-		// Get threshold callbacks with a debounce time of 10 seconds (10000ms)
-		al.setDebouncePeriod(10000);
+                BrickletAmbientLightV2 al = new BrickletAmbientLightV2(UID, ipcon); // Create device object
+                
+		// Get threshold callbacks with a debounce time of 5 minues (10000ms = 10sek)
+		al.setDebouncePeriod(300000);
 
 		// Add illuminance reached listener (parameter has unit Lux/10)
-		al.addIlluminanceReachedListener(new BrickletAmbientLight.IlluminanceReachedListener() {
-			public void illuminanceReached(int illuminance) {
-				System.out.println("Illuminance: " + illuminance/10.0 + " Lux");
-				System.out.println("Too bright, close the curtains!");
-                                MqttMessage message=new MqttMessage();
-                                message.setPayload((""+illuminance/10.0 + " Lux").getBytes());
+		al.addIlluminanceReachedListener(new BrickletAmbientLightV2.IlluminanceReachedListener() {
+			public void illuminanceReached(long illuminance) {
+				
+                            DateInput di = new DateInput();
+                            MqttMessage message=new MqttMessage();
+                            
+                            if (illuminance < offValue){
+                            message.setPayload(("ausgeschalten/"+illuminance/10.0 + "/" + di.getDate()).getBytes());
+                            message.setRetained(true);
+                            message.setQos(0);
+                            service.communication.publish(getTopicValue(), message);
+                            System.out.println(message);
+                            } else if (illuminance >= onValue){
+                                message.setPayload(("eingeschalten/"+illuminance/10.0 + "/" + di.getDate()).getBytes());
                                 message.setRetained(true);
                                 message.setQos(0);
-                                service.communication.publish(SENSOR_TYP+BASE_SENSOR_ID+"/Value: ", message);
-                                
-                                DateInput di = new DateInput();
-                                MqttMessage dateMessage = new MqttMessage();
-                                dateMessage.setPayload((di.getDate()).getBytes());
-                                dateMessage.setRetained(true);
-                                dateMessage.setQos(0);
-                                service.communication.publish(SENSOR_TYP+BASE_SENSOR_ID+"/Date: ", dateMessage);
+                                service.communication.publish(getTopicValue(), message);
+                                System.out.println(message);
+                            }
 			}
 		});
 
-		// Configure threshold for illuminance "greater than 200 Lux" (unit is Lux/10)
-		al.setIlluminanceCallbackThreshold('o', 20*10, 30*10);
+		// Configure threshold for illuminance push<50 out of to 170>push (unit is Lux/10)
+		al.setIlluminanceCallbackThreshold('o', offValue, onValue);
     
-                
-               
-		System.out.println("Press key to exit"); System.in.read();
-		ipcon.disconnect();
     }
     
 }

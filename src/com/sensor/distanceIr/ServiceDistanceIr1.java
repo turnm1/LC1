@@ -21,10 +21,10 @@ import org.eclipse.paho.client.mqttv3.MqttMessage;
  *
  * @author Turna
  */
-public class ServiceDistanceIr implements MqttCallback{
+public class ServiceDistanceIr1 implements MqttCallback{
 
-    private static final String UID = "qt4"; // Change to your UID   
-    private static final String ROOM = "Wohnungseingang";
+    private static final String UID = "tJo"; // Change to your UID   
+    private static final String ROOM = "WC";
     
      public final static String BASE_SENSOR_ID = "Distanz IR";
         public final static String CLIENT_ID = BASE_SENSOR_ID+"/"+ROOM+"/"+UID;
@@ -36,7 +36,7 @@ public class ServiceDistanceIr implements MqttCallback{
     private final MQTTCommunication communication;
     	
     
-     public ServiceDistanceIr() throws MqttException {
+     public ServiceDistanceIr1() throws MqttException {
         communication = new MQTTCommunication();
         MQTTParameters parameters = new MQTTParameters();
         parameters.setClientID(CLIENT_ID);
@@ -77,7 +77,7 @@ public class ServiceDistanceIr implements MqttCallback{
 
     @Override
     public void messageArrived(String string, MqttMessage mm) throws Exception {
-        System.out.printf("Message has been delivered and is back again. Topic: %s, Message: %s \n", string, new String(mm.getPayload()));
+       System.out.printf("Message has been delivered and is back again. Topic: %s, Message: %s \n", string, new String(mm.getPayload()));
     }
 
     @Override
@@ -92,7 +92,7 @@ public class ServiceDistanceIr implements MqttCallback{
     //       you might normally want to catch are described in the documentation
     public static void main(String[] args) throws MqttException, Exception {
         
-        ServiceDistanceIr service=new ServiceDistanceIr();
+        ServiceDistanceIr1 service=new ServiceDistanceIr1();
                 
         
                 IPConnection ipcon = new IPConnection();
@@ -133,16 +133,22 @@ public class ServiceDistanceIr implements MqttCallback{
                                 MqttMessage message=new MqttMessage();
                                 message.setRetained(true);
                                 message.setQos(0);
-                                
-                                DateInput di = new DateInput();
- 
-                            if (distance <= 790){
-                                message.setPayload(("Passage Detected" + "/" + di.getDate()).getBytes());
+                            System.out.println(distance);
+                            if (distance != 1500){
+                                message.setPayload(("Passage Detected").getBytes());
                                 service.communication.publish(getTopicValue(), message);
                                 } else {
-                                message.setPayload(("No Passage" + "/" + di.getDate()).getBytes());
+                                message.setPayload(("No Passage").getBytes());
                                 service.communication.publish(getTopicValue(), message);
-                                }  
+                                }
+                                
+                                DateInput di = new DateInput();
+                                MqttMessage dateMessage = new MqttMessage();
+                                dateMessage.setPayload((di.getDate()).getBytes());
+                                dateMessage.setRetained(true);
+                                dateMessage.setQos(0);
+                                service.communication.publish(getTopicDate(), dateMessage);
+                                
 			}
 		});
                                 
@@ -154,7 +160,6 @@ public class ServiceDistanceIr implements MqttCallback{
 		// Note: The distance callback is only called every 0.2 seconds
 		//       if the distance has changed since the last call!
 		dir.setDistanceCallbackPeriod(2000);
-
     }
     
 }

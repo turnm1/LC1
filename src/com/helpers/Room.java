@@ -10,15 +10,50 @@ package com.helpers;
  * @author Turna
  */
 public class Room {
-    
-    private String Room;
 
-    public String getRoom() {
-        return Room;
+    public String RoomLocation;
+    public String newRoom;
+    public String newUID;
+    public String lastRoom;
+    public String lastUID;
+
+    public String getNewUID() {
+        return newUID;
     }
 
-    public void setRoom(String Room) {
-        this.Room = Room;
+    public void setNewUID(String newUID) {
+        this.newUID = newUID;
+    }
+
+    public String getLastUID() {
+        return lastUID;
+    }
+
+    public void setLastUID(String lastUID) {
+        this.lastUID = lastUID;
     }
     
+    public String getRoomLocation() {
+        return RoomLocation;
+    }
+
+    public void setRoomLocation(String RoomLocation) {
+        this.RoomLocation = RoomLocation;
+    }
+
+    public String getNewRoom() {
+        return newRoom;
+    }
+
+    public void setNewRoom(String newRoom) {
+        this.newRoom = newRoom;
+    }
+
+    public String getLastRoom() {
+        return lastRoom;
+    }
+
+    public void setLastRoom(String lastRoom) {
+        this.lastRoom = lastRoom;
+    }
 }

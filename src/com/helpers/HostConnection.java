@@ -11,12 +11,13 @@ package com.helpers;
  */
 public class HostConnection {
    
-   private static String HostIP ="192.168.1.16";
+   private static String HostIP = "192.168.1.16";    //Mete
+   private static String MedInf = "10.0.233.116";    //Mete
    private static String HostIPLocalhost = "localhost";
    private static int Port = 4223;
    
     public String getHostIP(){
-        return HostIP;
+        return MedInf;
     }
     
     public String getLocalhost(){

@@ -21,10 +21,10 @@ import org.eclipse.paho.client.mqttv3.MqttMessage;
  *
  * @author Turna
  */
-public class ServiceCo2 implements MqttCallback{
+public class ServiceCo2_1 implements MqttCallback{
 
         private static final String UID = "x71"; // Change to your UID
-        private final static String ROOM = "Wohnungseingang";
+        private final static String ROOM = "WC";
         
         public final static String BASE_SENSOR_ID = "CO2";
         public final static String CLIENT_ID = BASE_SENSOR_ID+"/"+ROOM+"/"+UID;
@@ -36,7 +36,7 @@ public class ServiceCo2 implements MqttCallback{
         private final MQTTCommunication communication;
     
         
-     public ServiceCo2() throws MqttException {
+     public ServiceCo2_1() throws MqttException {
         communication = new MQTTCommunication();
         MQTTParameters parameters = new MQTTParameters();
         parameters.setClientID(CLIENT_ID);
@@ -92,7 +92,7 @@ public class ServiceCo2 implements MqttCallback{
     //       you might normally want to catch are described in the documentation
     public static void main(String[] args) throws MqttException, Exception {
         
-        ServiceCo2 service = new ServiceCo2();
+        ServiceCo2_1 service = new ServiceCo2_1();
                 
                 IPConnection ipcon = new IPConnection();
                 HostConnection hc = new HostConnection();
@@ -107,23 +107,19 @@ public class ServiceCo2 implements MqttCallback{
 		// Add CO2 concentration listener (parameter has unit ppm)
 		co2.addCO2ConcentrationListener(new BrickletCO2.CO2ConcentrationListener() {
 			public void co2Concentration(int co2Concentration) {
-				
-                           
+				System.out.println("CO2 Concentration: " + co2Concentration + " ppm");
                                 MqttMessage message=new MqttMessage();
-                                DateInput di = new DateInput();
+                                message.setPayload((""+co2Concentration + " ppm").getBytes());
                                 message.setRetained(true);
                                 message.setQos(0);
+                                service.communication.publish(getTopicValue(), message);
                                 
-                                if(co2Concentration >= 800){
-                                    message.setPayload(("normal" + "/" + di.getDate()).getBytes());
-                                    service.communication.publish(getTopicValue(), message);
-                                } else if (co2Concentration < 800){
-                                    message.setPayload(("hoch" + "/" + di.getDate()).getBytes());
-                                    service.communication.publish(getTopicValue(), message);
-                                }
-                                
-                                
-                                
+                                DateInput di = new DateInput();
+                                MqttMessage dateMessage = new MqttMessage();
+                                dateMessage.setPayload((di.getDate()).getBytes());
+                                dateMessage.setRetained(true);
+                                dateMessage.setQos(0);
+                                service.communication.publish(getTopicDate(), dateMessage);
 			}
 		});
 

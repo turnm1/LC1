@@ -24,7 +24,7 @@ import org.eclipse.paho.client.mqttv3.MqttMessage;
 public class ServiceCo2_2 implements MqttCallback{
 
         private static final String UID = "x76"; // Change to your UID
-        private static final String ROOM = "Zimmer2";
+        private static final String ROOM = "Wohnzimmer";
         
         public final static String BASE_SENSOR_ID = "CO2";
         public final static String CLIENT_ID = BASE_SENSOR_ID+"/"+ROOM+"/"+UID;
@@ -124,10 +124,10 @@ public class ServiceCo2_2 implements MqttCallback{
 			}
 		});
 
-		// Set period for CO2 concentration callback to 1s (1000ms)
+		// Set period for CO2 concentration callback to 1min = 60000 (1000ms = 1sek)
 		// Note: The CO2 concentration callback is only called every second
 		//       if the CO2 concentration has changed since the last call!
-		co2.setCO2ConcentrationCallbackPeriod(10000);
+		co2.setCO2ConcentrationCallbackPeriod(60000);
 
 		
     }

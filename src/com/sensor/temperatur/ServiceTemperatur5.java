@@ -11,7 +11,6 @@ import com.communication.MQTTCommunication;
 import com.communication.MQTTParameters;
 import com.helpers.DateInput;
 import com.helpers.HostConnection;
-import com.helpers.Room;
 
 import java.net.URI;
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
@@ -22,14 +21,14 @@ import org.eclipse.paho.client.mqttv3.MqttMessage;
  *
  * @author Turna
  */
-public class ServiceTemperatur implements MqttCallback{
+public class ServiceTemperatur5 implements MqttCallback{
 
     
     /*
     Pfad: Temperatur/qvy/status & value
     */
-    private static final String UID = "qvy"; // Change to your UID
-    private static final String ROOM = "Wohnungseingang";
+    private static final String UID = "t6W"; // Change to your UID
+    private static final String ROOM = "Küche";
         
     public final static String BASE_SENSOR_ID = "Temperatur";
     public final static String CLIENT_ID = BASE_SENSOR_ID+"/"+ROOM+"/"+UID;
@@ -42,7 +41,7 @@ public class ServiceTemperatur implements MqttCallback{
 
 
     
-     public ServiceTemperatur() throws MqttException {
+     public ServiceTemperatur5() throws MqttException {
         communication = new MQTTCommunication();
         MQTTParameters parameters = new MQTTParameters();
         parameters.setClientID(CLIENT_ID);
@@ -98,7 +97,7 @@ public class ServiceTemperatur implements MqttCallback{
     //       you might normally want to catch are described in the documentation
     public static void main(String[] args) throws MqttException, Exception {
         
-        ServiceTemperatur service=new ServiceTemperatur();
+        ServiceTemperatur5 service=new ServiceTemperatur5();
                 
         IPConnection ipcon = new IPConnection();
                     HostConnection hc = new HostConnection();
@@ -106,7 +105,8 @@ public class ServiceTemperatur implements MqttCallback{
                     int PORT = hc.getPort();     
                     ipcon.connect(HOST, PORT); // Connect to brickd
                     // Don't use device before ipcon is connected
-		BrickletTemperature t = new BrickletTemperature(UID, ipcon); // Create device object
+		
+                    BrickletTemperature t = new BrickletTemperature(UID, ipcon); // Create device object
 
 
 		// Add temperature reached listener (parameter has unit °C/100)
@@ -145,7 +145,7 @@ public class ServiceTemperatur implements MqttCallback{
                 
                 
 		// Configure threshold for temperature "greater than 30 °C" (unit is °C/100)
-		t.setTemperatureCallbackThreshold('o', (short)(20*100), (short)(25*100));
+		t.setTemperatureCallbackThreshold('o', (short)(25*100), (short)(30*100));
                 // Get threshold callbacks with a debounce time of 5 minutes = 300000ms (10000ms = 10sec)
 		t.setDebouncePeriod(300000);
                 
@@ -154,8 +154,6 @@ public class ServiceTemperatur implements MqttCallback{
 		//       if the temperature has changed since the last call!
 		t.setTemperatureCallbackPeriod(3600000);
                 
-                
-
     }
     
 }

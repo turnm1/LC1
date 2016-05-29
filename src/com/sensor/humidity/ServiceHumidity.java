@@ -109,20 +109,15 @@ public class ServiceHumidity implements MqttCallback{
 		// Add humidity reached listener (parameter has unit %RH/10)
 		h.addHumidityReachedListener(new BrickletHumidity.HumidityReachedListener() {
 			public void humidityReached(int humidity) {
-				System.out.println("Humidity: " + humidity/10.0 + " %RH");
-
+				
                                 MqttMessage message=new MqttMessage();
-                                message.setPayload((""+ humidity/10.0 + " %RH").getBytes());
+                                DateInput di = new DateInput();
                                 message.setRetained(true);
                                 message.setQos(0);
+                                
+                                message.setPayload((""+ humidity/10.0 + " %RH" + "/" + di.getDate()).getBytes());
                                 service.communication.publish(getTopicValue(), message);
                                 
-                                DateInput di = new DateInput();
-                                MqttMessage dateMessage = new MqttMessage();
-                                dateMessage.setPayload((di.getDate()).getBytes());
-                                dateMessage.setRetained(true);
-                                dateMessage.setQos(0);
-                                service.communication.publish(getTopicDate(), dateMessage);
 			}
 		});
 

@@ -11,7 +11,6 @@ import com.communication.MQTTCommunication;
 import com.communication.MQTTParameters;
 import com.helpers.DateInput;
 import com.helpers.HostConnection;
-import com.helpers.Room;
 
 import java.net.URI;
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;

@@ -11,7 +11,6 @@ import com.communication.MQTTCommunication;
 import com.communication.MQTTParameters;
 import com.helpers.DateInput;
 import com.helpers.HostConnection;
-import com.helpers.Room;
 
 import java.net.URI;
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
@@ -22,14 +21,14 @@ import org.eclipse.paho.client.mqttv3.MqttMessage;
  *
  * @author Turna
  */
-public class ServiceTemperatur implements MqttCallback{
+public class ServiceTemperatur4 implements MqttCallback{
 
     
     /*
     Pfad: Temperatur/qvy/status & value
     */
     private static final String UID = "qvy"; // Change to your UID
-    private static final String ROOM = "Wohnungseingang";
+    private static final String ROOM = "Badzimmer";
         
     public final static String BASE_SENSOR_ID = "Temperatur";
     public final static String CLIENT_ID = BASE_SENSOR_ID+"/"+ROOM+"/"+UID;
@@ -42,7 +41,7 @@ public class ServiceTemperatur implements MqttCallback{
 
 
     
-     public ServiceTemperatur() throws MqttException {
+     public ServiceTemperatur4() throws MqttException {
         communication = new MQTTCommunication();
         MQTTParameters parameters = new MQTTParameters();
         parameters.setClientID(CLIENT_ID);
@@ -98,7 +97,7 @@ public class ServiceTemperatur implements MqttCallback{
     //       you might normally want to catch are described in the documentation
     public static void main(String[] args) throws MqttException, Exception {
         
-        ServiceTemperatur service=new ServiceTemperatur();
+        ServiceTemperatur4 service=new ServiceTemperatur4();
                 
         IPConnection ipcon = new IPConnection();
                     HostConnection hc = new HostConnection();
@@ -110,7 +109,7 @@ public class ServiceTemperatur implements MqttCallback{
 
 
 		// Add temperature reached listener (parameter has unit °C/100)
-		t.addTemperatureReachedListener(new BrickletTemperature.TemperatureReachedListener() {
+                t.addTemperatureReachedListener(new BrickletTemperature.TemperatureReachedListener() {
 			public void temperatureReached(short temperature) {
 				
                             DateInput di = new DateInput();

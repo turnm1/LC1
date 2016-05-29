@@ -8,7 +8,6 @@ package db.mysql.communication;
 import com.agent.AgentService;
 import com.communication.MQTTCommunication;
 import com.communication.MQTTParameters;
-import com.sensor.temperaturIr.ServiceTemperaturIr;
 import db.mysql.connection.dbConnection;
 import java.net.URI;
 import java.sql.Connection;
@@ -57,7 +56,7 @@ public class dbPush implements MqttCallback {
         parameters.setMqttCallback(this);
         communication.connect(parameters);
         communication.publishActualWill(STATUS_CONNECTION_ONLINE.getBytes());
-        communication.subscribe(BASE_SENSOR_ID + "/#", 0);
+        //communication.subscribe(BASE_SENSOR_ID + "/#", 0);
         parameters.getLastWillMessage();
     }
 
@@ -90,7 +89,6 @@ public class dbPush implements MqttCallback {
     
     public static void connection() {
         try {
-            
             String serverName = "localhost";
             String mydatabase = "aal_test";
             String url = "jdbc:mysql://" + serverName + "/" + mydatabase;
@@ -112,7 +110,7 @@ public class dbPush implements MqttCallback {
     public static void main(String[] args) throws MqttException {
 
         dbPush service = new dbPush();
-       service.communication.subscribe("AGENT/#", 0);
+        service.communication.subscribe("AGENT/#", 0);
        //service.communication.subscribe(AGENT+"/#", 0);
 
     }

@@ -24,7 +24,7 @@ import org.eclipse.paho.client.mqttv3.MqttMessage;
 public class ServiceMotiondetector implements MqttCallback{
 
     	private static final String UID = "qtu"; // Change to your UID
-        private static final String ROOM ="Zimmer";
+        private static final String ROOM ="WC";
         
   public final static String BASE_SENSOR_ID = "Motion Detector";
         public final static String CLIENT_ID = BASE_SENSOR_ID+"/"+ROOM+"/"+UID;
@@ -78,7 +78,7 @@ public class ServiceMotiondetector implements MqttCallback{
 
     @Override
     public void messageArrived(String string, MqttMessage mm) throws Exception {
-        System.out.printf("Message has been delivered and is back again. Topic: %s, Message: %s \n", string, new String(mm.getPayload()));
+      //  System.out.printf("Message has been delivered and is back again. Topic: %s, Message: %s \n", string, new String(mm.getPayload()));
     }
 
     @Override
@@ -109,18 +109,13 @@ public class ServiceMotiondetector implements MqttCallback{
 		md.addMotionDetectedListener(new BrickletMotionDetector.MotionDetectedListener() {
 			public void motionDetected() {
 
-                                MqttMessage message=new MqttMessage();
-                                message.setPayload(("Motion Detected").getBytes());
-                                message.setRetained(true);
-                                message.setQos(0);
-                                service.communication.publish(getTopicValue(), message);
-                                
-                                DateInput di = new DateInput();
-                                MqttMessage dateMessage = new MqttMessage();
-                                dateMessage.setPayload((di.getDate()).getBytes());
-                                dateMessage.setRetained(true);
-                                dateMessage.setQos(0);
-                                service.communication.publish(getTopicDate(), dateMessage);
+                            DateInput di = new DateInput();
+                            MqttMessage message=new MqttMessage();
+                            message.setPayload(("Motion Detected" + "/" + di.getDate()).getBytes());
+                            message.setRetained(true);
+                            message.setQos(0);
+                            service.communication.publish(getTopicValue(), message);
+                           
                         }
 		});
                 
@@ -129,21 +124,15 @@ public class ServiceMotiondetector implements MqttCallback{
 		md.addDetectionCycleEndedListener(new BrickletMotionDetector.DetectionCycleEndedListener() {
 			public void detectionCycleEnded() {
 
-                                MqttMessage message=new MqttMessage();
-                                message.setPayload(("Motion Ended").getBytes());
-                                message.setRetained(true);
-                                message.setQos(0);
-                                service.communication.publish(getTopicValue(), message);
-                                
-                                DateInput di = new DateInput();
-                                MqttMessage dateMessage = new MqttMessage();
-                                dateMessage.setPayload((di.getDate()).getBytes());
-                                dateMessage.setRetained(true);
-                                dateMessage.setQos(0);
-                                service.communication.publish(getTopicDate(), dateMessage);
+                            DateInput di = new DateInput();
+                            MqttMessage message=new MqttMessage();
+                            message.setPayload(("Motion Ended" + "/" + di.getDate()).getBytes());
+                            message.setRetained(true);
+                            message.setQos(0);
+                            service.communication.publish(getTopicValue(), message);
+                            
                          }
-		});
-                
+		});        
     }
     
 }

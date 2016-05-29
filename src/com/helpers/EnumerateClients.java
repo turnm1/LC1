@@ -3,6 +3,12 @@ package com.helpers;
 import com.tinkerforge.IPConnection;
 
 public class EnumerateClients {
+    
+    private static String masterID;
+    
+    public String getMaserID(){
+        return masterID;        
+    }
 	
 	// Note: To make the example code cleaner we do not handle exceptions. Exceptions you
 	//       might normally want to catch are described in the documentation
@@ -21,6 +27,7 @@ public class EnumerateClients {
 			                      short[] hardwareVersion, short[] firmwareVersion,
 			                      int deviceIdentifier, short enumerationType) {
 				System.out.println("UID:               " + uid);
+                                masterID = uid;
 				System.out.println("Enumeration Type:  " + enumerationType);
 
 				if(enumerationType == IPConnection.ENUMERATION_TYPE_DISCONNECTED) {

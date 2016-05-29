@@ -11,6 +11,7 @@ import com.communication.MQTTCommunication;
 import com.communication.MQTTParameters;
 import com.helpers.DateInput;
 import com.helpers.HostConnection;
+import com.tinkerforge.BrickletAmbientLightV2;
 
 import java.net.URI;
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
@@ -26,7 +27,7 @@ public class ServiceAmbientLight2 implements MqttCallback{
     private final MQTTCommunication communication;   
     
     private static final String UID = "m1L"; // Change to your UID
-    private final static String ROOM = "Zimmer1";
+    private final static String ROOM = "Wohnungseingang";
  
     
         public final static String BASE_SENSOR_ID = "Ambient Light";
@@ -81,7 +82,7 @@ public class ServiceAmbientLight2 implements MqttCallback{
 
     @Override
     public void messageArrived(String string, MqttMessage mm) throws Exception {
-        System.out.printf("Message has been delivered and is back again. Topic: %s, Message: %s \n", string, new String(mm.getPayload()));
+      // System.out.printf("Message has been delivered and is back again. Topic: %s, Message: %s \n", string, new String(mm.getPayload()));
     }
 
     @Override
@@ -107,33 +108,29 @@ public class ServiceAmbientLight2 implements MqttCallback{
                 ipcon.connect(HOST, PORT); // Connect to brickd
                 // Don't use device before ipcon is connected
                 
-                BrickletAmbientLight al = new BrickletAmbientLight(UID, ipcon); // Create device object
-
-		// Get threshold callbacks with a debounce time of 10 seconds (10000ms)
-		al.setDebouncePeriod(10000);
+                BrickletAmbientLightV2 al = new BrickletAmbientLightV2(UID, ipcon); // Create device object
+                
+		// Get threshold callbacks with a debounce time of 5 minues (10000ms = 10sek)
+		al.setDebouncePeriod(300000);
 
 		// Add illuminance reached listener (parameter has unit Lux/10)
-		al.addIlluminanceReachedListener(new BrickletAmbientLight.IlluminanceReachedListener() {
-			public void illuminanceReached(int illuminance) {
-				System.out.println("Illuminance: " + illuminance/10.0 + " Lux");
-				System.out.println("Too bright, close the curtains!");
-                                MqttMessage message=new MqttMessage();
-                                message.setPayload((""+illuminance/10.0 + " Lux").getBytes());
-                                message.setRetained(true);
-                                message.setQos(0);
-                                service.communication.publish(getTopicValue(), message);
-                                
-                                DateInput di = new DateInput();
-                                MqttMessage dateMessage = new MqttMessage();
-                                dateMessage.setPayload((di.getDate()).getBytes());
-                                dateMessage.setRetained(true);
-                                dateMessage.setQos(0);
-                                service.communication.publish(getTopicDate(), dateMessage);
+		al.addIlluminanceReachedListener(new BrickletAmbientLightV2.IlluminanceReachedListener() {
+			public void illuminanceReached(long illuminance) {
+				
+                            DateInput di = new DateInput();
+                            MqttMessage message=new MqttMessage();
+                            
+                            message.setPayload((""+illuminance/10.0 + "/" + di.getDate()).getBytes());
+                            message.setRetained(true);
+                            message.setQos(0);
+                            
+                            service.communication.publish(getTopicValue(), message);
+                            System.out.println(message);
 			}
 		});
 
-		// Configure threshold for illuminance "greater than 200 Lux" (unit is Lux/10)
-		al.setIlluminanceCallbackThreshold('o', 20*10, 30*10);
+		// Configure threshold for illuminance push<50 out of to 170>push (unit is Lux/10)
+		al.setIlluminanceCallbackThreshold('o', 5*10, 17*10);
     
     }
     
