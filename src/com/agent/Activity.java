@@ -25,17 +25,14 @@ public class Activity implements MqttCallback {
     // Subscrib Pathways
    private static ServiceAmbientLight sal;     // Licht ein/aus
    private final static String SUBSCRIBE_SAL_VALUE = sal.getTopicValue();
-   private final static String SUBSCRIBE_SAL_DATE = sal.getTopicDate();
    private final static String SUBRSCRIB_SAL_STATUS = sal.getTopicStatus();
 
    private static ServiceLoadCell slc;          // Sitzen oder Liegen
    private final static String SUBSCRIBE_SLC_VALUE = slc.getTopicValue();
-   private final static String SUBSCRIBE_SLC_DATE = slc.getTopicDate();
    private final static String SUBRSCRIB_SLC_STATUS = slc.getTopicStatus();
 
    private static  ServiceSoundIntensity ssi;   // Wasserhahn auf/zu
    private final static String SUBSCRIBE_SSI_VALUE = ssi.getTopicValue();
-   private final static String SUBSCRIBE_SSI_DATE = ssi.getTopicDate();
    private final static String SUBRSCRIB_SSI_STATUS = ssi.getTopicStatus();
    
    /*
@@ -60,7 +57,7 @@ public class Activity implements MqttCallback {
     public final static String STATUS_CONNECTION_OFFLINE = "offline";
     public final static String STATUS_CONNECTION_ONLINE = "online";
 
-    public static String PUBLISH_TOPIC = "leer";
+    public static String PUBLISH_TOPIC = BASE_CONNECTION;
 
     private final MQTTCommunication communication;
 
@@ -79,7 +76,6 @@ public class Activity implements MqttCallback {
         communication.publishActualWill(STATUS_CONNECTION_ONLINE.getBytes());
        // communication.subscribe(AGENT + "/#", 0);
         parameters.getLastWillMessage();
-
     }
 
     // Get the Topic Pathway for Agent
@@ -137,9 +133,11 @@ public class Activity implements MqttCallback {
                 sensUID = sendedUID;
                 sensRoom = sendedRoom;
                 if (sensValue.equals("Passage Detected")) {
-                    System.out.println("Fenster wurde geöffnet / im Raum: " + sensRoom);
+                    message.setPayload(("Fenster wurde geöffnet / im Raum: " + sensRoom).getBytes());
+                    communication.publish(PUBLISH_TOPIC+ "/" + "Message:", message);
                 } else if (sensValue.equals("No Passage")) {
-                    System.out.println("Fenster wurde geschlossen / im Raum: " + sensRoom);
+                    message.setPayload(("Fenster wurde geschlossen / im Raum: " + sensRoom).getBytes());
+                    communication.publish(PUBLISH_TOPIC+ "/" + "Message:", message);
                 }
                 }
             }
@@ -165,15 +163,13 @@ public class Activity implements MqttCallback {
 
         // Subscribe via Broker the LoadCell Sensor
                 service.communication.subscribe(SUBSCRIBE_SLC_VALUE, 0);
-                service.communication.subscribe(SUBSCRIBE_SLC_DATE, 0);
                 
                 // Subscribe via Broker the Ambiente Light Sensor
                 service.communication.subscribe(SUBSCRIBE_SAL_VALUE, 0);
-                service.communication.subscribe(SUBSCRIBE_SAL_DATE, 0);
                 
                 // Subscribe via Broker the SoundIntensity Sensor
                 service.communication.subscribe(SUBSCRIBE_SSI_VALUE, 0);
-                service.communication.subscribe(SUBSCRIBE_SSI_DATE, 0);
+
 
     }
 
