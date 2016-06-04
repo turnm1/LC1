@@ -23,10 +23,10 @@ import org.eclipse.paho.client.mqttv3.MqttMessage;
  */
 public class ServiceDistanceIr5 implements MqttCallback{
 
-    private static final String UID = "tJo"; // Change to your UID   
-    private static final String ROOM = "Küche";
+    private static final String UID = "tJo"; // Demo Fenster offen / zu 
+    private static final String ROOM = "Fenster";
     
-     public final static String BASE_SENSOR_ID = "Distanz IR";
+     public final static String BASE_SENSOR_ID = "Distance IR";
         public final static String CLIENT_ID = BASE_SENSOR_ID+"/"+ROOM+"/"+UID;
         public final static String STATUS_TOPIC = CLIENT_ID + "/status";
         public final static String STATUS_TOPIC_CONNECTION = STATUS_TOPIC + "/connection";

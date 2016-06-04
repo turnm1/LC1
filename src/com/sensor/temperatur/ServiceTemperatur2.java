@@ -101,7 +101,7 @@ public class ServiceTemperatur2 implements MqttCallback{
                 
         IPConnection ipcon = new IPConnection();
                     HostConnection hc = new HostConnection();
-                    String HOST = hc.getLocalhost();
+                    String HOST = hc.getIPWohnzimmer();
                     int PORT = hc.getPort();     
                     ipcon.connect(HOST, PORT); // Connect to brickd
                     // Don't use device before ipcon is connected

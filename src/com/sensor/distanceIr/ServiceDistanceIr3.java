@@ -26,7 +26,7 @@ public class ServiceDistanceIr3 implements MqttCallback{
     private static final String UID = "tJo"; // Change to your UID   
     private static final String ROOM = "Schlafzimmer";
     
-     public final static String BASE_SENSOR_ID = "Distanz IR";
+     public final static String BASE_SENSOR_ID = "Distance IR";
         public final static String CLIENT_ID = BASE_SENSOR_ID+"/"+ROOM+"/"+UID;
         public final static String STATUS_TOPIC = CLIENT_ID + "/status";
         public final static String STATUS_TOPIC_CONNECTION = STATUS_TOPIC + "/connection";
@@ -97,7 +97,7 @@ public class ServiceDistanceIr3 implements MqttCallback{
         
                 IPConnection ipcon = new IPConnection();
                 HostConnection hc = new HostConnection();
-                String HOST = hc.getLocalhost();
+                String HOST = hc.getIPSchlafzimmer();
                 int PORT = hc.getPort();     
                 ipcon.connect(HOST, PORT); // Connect to brickd
                 // Don't use device before ipcon is connected

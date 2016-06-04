@@ -26,8 +26,8 @@ public class ServiceAmbientLight4 implements MqttCallback{
 
     private final MQTTCommunication communication;   
     
-    private static final String UID = "m1L"; // Change to your UID
-    private final static String ROOM = "Badzimmer";
+    private static final String UID = "m1L"; // Kueche
+    private final static String ROOM = "Kueche";
  
     
         public final static String BASE_SENSOR_ID = "Ambient Light";
@@ -103,7 +103,7 @@ public class ServiceAmbientLight4 implements MqttCallback{
                           
                 IPConnection ipcon = new IPConnection();
                 HostConnection hc = new HostConnection();
-                String HOST = hc.getLocalhost();
+                String HOST = hc.getIPKueche();
                 int PORT = hc.getPort();     
                 ipcon.connect(HOST, PORT); // Connect to brickd
                 // Don't use device before ipcon is connected

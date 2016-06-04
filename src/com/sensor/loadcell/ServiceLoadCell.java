@@ -23,7 +23,7 @@ import org.eclipse.paho.client.mqttv3.MqttMessage;
  */
 public class ServiceLoadCell implements MqttCallback{
   
-    private static final String UID = "vdv"; // Change to your UID
+    private static final String UID = "vdv"; // vdv = Links unten
     private static final String ROOM = "Schlafzimmer";
     
     public final static String BASE_SENSOR_ID = "Load Cell";
@@ -61,11 +61,6 @@ public class ServiceLoadCell implements MqttCallback{
        return value;
     }
     
-    public static String getTopicDate(){
-       String date = CLIENT_ID+"/Date:";
-       return date;
-    }
-    
     public static String getTopicStatus(){
         String status = STATUS_TOPIC_CONNECTION;
         return status;
@@ -98,7 +93,7 @@ public class ServiceLoadCell implements MqttCallback{
         
               IPConnection ipcon = new IPConnection();
                 HostConnection hc = new HostConnection();
-                String HOST = hc.getHostIP();
+                String HOST = hc.getIPSchlafzimmer_Bett();
                 int PORT = hc.getPort();     
                 ipcon.connect(HOST, PORT); // Connect to brickd
                 // Don't use device before ipcon is connected
@@ -119,10 +114,10 @@ public class ServiceLoadCell implements MqttCallback{
                             message.setQos(0);
                             
                             if (weight >= 200){
-                                message.setPayload(("sitzt/liegt" + "/" + di.getDate()).getBytes());
+                                message.setPayload((weight + "/liegt" + "/" + di.getDate()).getBytes());
                                 service.communication.publish(getTopicValue(), message);
                             } else if (weight < 200){
-                                message.setPayload(("aufgestanden" + "/" + di.getDate()).getBytes());
+                                message.setPayload((weight + "/aufgestanden" + "/" + di.getDate()).getBytes());
                                 service.communication.publish(getTopicValue(), message);
                             }
                             
@@ -130,8 +125,8 @@ public class ServiceLoadCell implements MqttCallback{
 			}
 		});
 
-		// Configure threshold for weight "greater than 200 g" (unit is g)
-		lc.setWeightCallbackThreshold('>', 16788000, 0);
+		// Configure threshold for weight "greater than 1kg g" (1kg = 1000g)
+		lc.setWeightCallbackThreshold('>', 5000, 0);
 
     }
     

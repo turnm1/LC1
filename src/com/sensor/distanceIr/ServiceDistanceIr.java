@@ -26,7 +26,7 @@ public class ServiceDistanceIr implements MqttCallback{
     private static final String UID = "qt4"; // Change to your UID   
     private static final String ROOM = "Wohnungseingang";
     
-     public final static String BASE_SENSOR_ID = "Distanz IR";
+     public final static String BASE_SENSOR_ID = "Distance IR";
         public final static String CLIENT_ID = BASE_SENSOR_ID+"/"+ROOM+"/"+UID;
         public final static String STATUS_TOPIC = CLIENT_ID + "/status";
         public final static String STATUS_TOPIC_CONNECTION = STATUS_TOPIC + "/connection";
@@ -77,7 +77,7 @@ public class ServiceDistanceIr implements MqttCallback{
 
     @Override
     public void messageArrived(String string, MqttMessage mm) throws Exception {
-        System.out.printf("Message has been delivered and is back again. Topic: %s, Message: %s \n", string, new String(mm.getPayload()));
+        //System.out.printf("Message has been delivered and is back again. Topic: %s, Message: %s \n", string, new String(mm.getPayload()));
     }
 
     @Override
@@ -97,7 +97,7 @@ public class ServiceDistanceIr implements MqttCallback{
         
                 IPConnection ipcon = new IPConnection();
                 HostConnection hc = new HostConnection();
-                String HOST = hc.getLocalhost();
+                String HOST = hc.getIPEingang();
                 int PORT = hc.getPort();     
                 ipcon.connect(HOST, PORT); // Connect to brickd
                 // Don't use device before ipcon is connected

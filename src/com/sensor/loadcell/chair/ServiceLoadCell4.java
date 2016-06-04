@@ -3,9 +3,10 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package com.sensor.co2;
+package com.sensor.loadcell.chair;
 
-import com.tinkerforge.BrickletCO2;
+import com.sensor.loadcell.*;
+import com.tinkerforge.BrickletLoadCell;
 import com.tinkerforge.IPConnection;
 import com.communication.MQTTCommunication;
 import com.communication.MQTTParameters;
@@ -17,26 +18,28 @@ import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
 import org.eclipse.paho.client.mqttv3.MqttCallback;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
+
 /**
  *
  * @author Turna
  */
-public class ServiceCo2_5 implements MqttCallback{
-
-        private static final String UID = "x71"; // Change to your UID
-        private final static String ROOM = "Küche";
-        
-        public final static String BASE_SENSOR_ID = "CO2";
+public class ServiceLoadCell4 implements MqttCallback{
+  
+    private static final String UID = "***"; // Vorne links
+    private static final String ROOM = "Wohnzimmer";
+    
+    public final static String BASE_SENSOR_ID = "Load Cell";
         public final static String CLIENT_ID = BASE_SENSOR_ID+"/"+ROOM+"/"+UID;
         public final static String STATUS_TOPIC = CLIENT_ID + "/status";
         public final static String STATUS_TOPIC_CONNECTION = STATUS_TOPIC + "/connection";
         public final static String STATUS_CONNECTION_OFFLINE="offline";
         public final static String STATUS_CONNECTION_ONLINE="online";
 
-        private final MQTTCommunication communication;
     
-        
-     public ServiceCo2_5() throws MqttException {
+    private final MQTTCommunication communication;
+
+    
+     public ServiceLoadCell4() throws MqttException {
         communication = new MQTTCommunication();
         MQTTParameters parameters = new MQTTParameters();
         parameters.setClientID(CLIENT_ID);
@@ -51,25 +54,21 @@ public class ServiceCo2_5 implements MqttCallback{
         communication.publishActualWill(STATUS_CONNECTION_ONLINE.getBytes());
         communication.subscribe(BASE_SENSOR_ID+"/#", 0);
         parameters.getLastWillMessage();
-
+        
     }
-
-     // Get the Topic Pathway for Co2
-   public static String getTopicValue(){
+     
+     // Get the Topic Pathway for Loadcell
+     public static String getTopicValue(){
        String value = CLIENT_ID+"/Value:";
        return value;
     }
     
-    public static String getTopicDate(){
-       String date = CLIENT_ID+"/Date:";
-       return date;
-    }
     
     public static String getTopicStatus(){
         String status = STATUS_TOPIC_CONNECTION;
         return status;
     }
-     
+
     @Override
     public void connectionLost(Throwable thrwbl) {
         System.out.println("Ouups, lost connection to subscirptions");
@@ -92,43 +91,46 @@ public class ServiceCo2_5 implements MqttCallback{
     //       you might normally want to catch are described in the documentation
     public static void main(String[] args) throws MqttException, Exception {
         
-        ServiceCo2_5 service = new ServiceCo2_5();
+        ServiceLoadCell4 service=new ServiceLoadCell4();
                 
-                IPConnection ipcon = new IPConnection();
+        
+              IPConnection ipcon = new IPConnection();
                 HostConnection hc = new HostConnection();
-                String HOST = hc.getLocalhost();
+                String HOST = hc.getIPSchlafzimmer_Bett();
                 int PORT = hc.getPort();     
                 ipcon.connect(HOST, PORT); // Connect to brickd
                 // Don't use device before ipcon is connected
                 
-		BrickletCO2 co2 = new BrickletCO2(UID, ipcon); // Create device object
+		BrickletLoadCell lc = new BrickletLoadCell(UID, ipcon); // Create device object
 
 
-		// Add CO2 concentration listener (parameter has unit ppm)
-		co2.addCO2ConcentrationListener(new BrickletCO2.CO2ConcentrationListener() {
-			public void co2Concentration(int co2Concentration) {
-				System.out.println("CO2 Concentration: " + co2Concentration + " ppm");
-                                MqttMessage message=new MqttMessage();
-                                message.setPayload((""+co2Concentration + " ppm").getBytes());
-                                message.setRetained(true);
-                                message.setQos(0);
+		// Get threshold callbacks with a debounce time of 1 second (1000ms)
+		lc.setDebouncePeriod(1000);
+
+		// Add weight reached listener (parameter has unit g)
+		lc.addWeightReachedListener(new BrickletLoadCell.WeightReachedListener() {
+			public void weightReached(int weight) {
+                            
+                            MqttMessage message=new MqttMessage();
+                            DateInput di = new DateInput();
+                            message.setRetained(true);
+                            message.setQos(0);
+                            
+                            if (weight >= 200){
+                                message.setPayload(("sitzen" + "/" + di.getDate()).getBytes());
                                 service.communication.publish(getTopicValue(), message);
+                            } else if (weight < 200){
+                                message.setPayload(("aufgestanden" + "/" + di.getDate()).getBytes());
+                                service.communication.publish(getTopicValue(), message);
+                            }
+                            
                                 
-                                DateInput di = new DateInput();
-                                MqttMessage dateMessage = new MqttMessage();
-                                dateMessage.setPayload((di.getDate()).getBytes());
-                                dateMessage.setRetained(true);
-                                dateMessage.setQos(0);
-                                service.communication.publish(getTopicDate(), dateMessage);
 			}
 		});
 
-		// Set period for CO2 concentration callback to 1min = 60000 (1000ms = 1sek)
-		// Note: The CO2 concentration callback is only called every second
-		//       if the CO2 concentration has changed since the last call!
-		co2.setCO2ConcentrationCallbackPeriod(60000);
+		// Configure threshold for weight "greater than 1kg g" (1kg = 1000g)
+		lc.setWeightCallbackThreshold('>', 5000, 0);
 
-		
     }
     
 }

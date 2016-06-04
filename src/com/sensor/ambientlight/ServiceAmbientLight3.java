@@ -26,7 +26,7 @@ public class ServiceAmbientLight3 implements MqttCallback{
 
     private final MQTTCommunication communication;   
     
-    private static final String UID = "m1L"; // Change to your UID
+    private static final String UID = "yhZ"; // Change to your UID
     private final static String ROOM = "Schlafzimmer";
  
     
@@ -103,7 +103,7 @@ public class ServiceAmbientLight3 implements MqttCallback{
                           
                 IPConnection ipcon = new IPConnection();
                 HostConnection hc = new HostConnection();
-                String HOST = hc.getLocalhost();
+                String HOST = hc.getIPSchlafzimmer();
                 int PORT = hc.getPort();     
                 ipcon.connect(HOST, PORT); // Connect to brickd
                 // Don't use device before ipcon is connected

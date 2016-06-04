@@ -7,7 +7,10 @@ package com.agent;
 import com.communication.MQTTCommunication;
 import com.communication.MQTTParameters;
 import com.sensor.ambientlight.ServiceAmbientLight;
-import com.sensor.loadcell.ServiceLoadCell;
+import com.sensor.distanceIr.ServiceDistanceIr5;
+import com.sensor.humidity.ServiceHumidity;
+import com.sensor.loadcell.chair.ServiceLoadCell4;
+import com.sensor.loadcell.chair.ServiceLoadCell5;
 import com.sensor.soundintensity.ServiceSoundIntensity;
 
 import java.net.URI;
@@ -23,22 +26,29 @@ import org.eclipse.paho.client.mqttv3.MqttMessage;
 public class Activity implements MqttCallback {
 
     // Subscrib Pathways
-   private static ServiceAmbientLight sal;     // Licht ein/aus
-   private final static String SUBSCRIBE_SAL_VALUE = sal.getTopicValue();
-   private final static String SUBRSCRIB_SAL_STATUS = sal.getTopicStatus();
+    private static ServiceAmbientLight sal;     // Licht ein/aus
+    private final static String SUBSCRIBE_SAL_VALUE = sal.getTopicValue();
 
-   private static ServiceLoadCell slc;          // Sitzen oder Liegen
-   private final static String SUBSCRIBE_SLC_VALUE = slc.getTopicValue();
-   private final static String SUBRSCRIB_SLC_STATUS = slc.getTopicStatus();
+    private static ServiceLoadCell4 slc4;          // auf Stuhl sitzen oder nicht
+    private final static String SUBSCRIBE_SLC4_VALUE = slc4.getTopicValue();
+    private static ServiceLoadCell5 slc5;          // auf Stuhl sitzen oder nicht
+    private final static String SUBSCRIBE_SLC5_VALUE = slc5.getTopicValue();
+    
+    private static BedAgent bedA;                   // bed activity sitzen oder liegen
+    private final static String SUBSCRIBE_BEDA_VALUE = bedA.getTopicValue();
 
-   private static  ServiceSoundIntensity ssi;   // Wasserhahn auf/zu
-   private final static String SUBSCRIBE_SSI_VALUE = ssi.getTopicValue();
-   private final static String SUBRSCRIB_SSI_STATUS = ssi.getTopicStatus();
-   
-   /*
+    private static ServiceSoundIntensity ssi;   // Wasserhahn auf/zu
+    private final static String SUBSCRIBE_SSI_VALUE = ssi.getTopicValue();
+
+    private static ServiceDistanceIr5 sdir5;     // Fenster offen/geschlossen
+    private final static String SUBSCRIBE_SDIR5_VALUE = sdir5.getTopicValue();
+
+    private static ServiceHumidity sh;     // Fenster offen/geschlossen
+    private final static String SUBSCRIBE_SH_VALUE = sh.getTopicValue();
+
+    /*
    Es fehlt noch die Aktivity Strom ein/aus (zum Stom, kann man eindeutige Geräte anschliessen), Fenster auf/zu
-   */
-
+     */
     private static String sensTyp = "";
     private static String sensUID = "";
     private static String sensRoom = "";
@@ -46,6 +56,13 @@ public class Activity implements MqttCallback {
 
     private static String sensValue = null;
     private static String valueDate = "";
+    
+    
+    private static String chairUIDgroup1 = "***1***2";
+    private static String chair1Value;
+    private static String chair2Value;
+    private static String sensChairUIDgroup;
+    private static String chairRoom;
 
     // Agent Pathways
     public final static String AGENT = "AGENT";
@@ -74,7 +91,7 @@ public class Activity implements MqttCallback {
         parameters.setMqttCallback(this);
         communication.connect(parameters);
         communication.publishActualWill(STATUS_CONNECTION_ONLINE.getBytes());
-       // communication.subscribe(AGENT + "/#", 0);
+        // communication.subscribe(AGENT + "/#", 0);
         parameters.getLastWillMessage();
     }
 
@@ -92,11 +109,11 @@ public class Activity implements MqttCallback {
 
     @Override
     public void messageArrived(String string, MqttMessage mm) throws Exception {
-            
+
         MqttMessage message = new MqttMessage();
         message.setRetained(true);
         message.setQos(0);
-            
+
         if (string.endsWith("Value:")) {
             String[] res = string.split("/", 4);
             String sendedRoom = res[1];
@@ -104,53 +121,85 @@ public class Activity implements MqttCallback {
             String sendedUID = res[2];
 
             valueDate = new String(mm.getPayload());
-            String [] vd = valueDate.split("/",2);
+            String[] vd = valueDate.split("/", 2);
             sensValue = vd[0];
 
-             if (sendedSensTyp.equals("Load Cell")) {
-                 if (!sensUID.equals(sendedUID) && !sensRoom.equals(sendedRoom)) {
-                 sensUID = sendedUID;
-                 sensRoom = sendedRoom;
-                 System.out.println("Aktivity: Bewohner liegt auf dem Bett,Stuhl,Sofa / im Raum: " + sensRoom);
-             }  }
-             
-             if (sendedSensTyp.equals("Ambient Light")){
-                 if (!sensUID.equals(sendedUID) && !sensRoom.equals(sendedRoom)) {
-                 sensUID = sendedUID;
-                 sensRoom = sendedRoom;
-                 System.out.println("Aktivity: Licht wurde "+ sensValue + " / im Raum: " + sensRoom);
-             }  }
-             
-             if (sendedSensTyp.equals("CO2")) {
-                 if (!sensUID.equals(sendedUID) && !sensRoom.equals(sendedRoom)) {
-                 sensUID = sendedUID;
-                 sensRoom = sendedRoom;
-                 System.out.println("Co2 Gehalt: " + sensValue + " / im Raum: " + sensRoom);
-             }  }
-        
-            if (sendedSensTyp.equals("Distance IR")) {
-                if (!sensUID.equals(sendedUID) && !sensRoom.equals(sendedRoom)) {
-                sensUID = sendedUID;
-                sensRoom = sendedRoom;
-                if (sensValue.equals("Passage Detected")) {
-                    message.setPayload(("Fenster wurde geöffnet / im Raum: " + sensRoom).getBytes());
-                    communication.publish(PUBLISH_TOPIC+ "/" + "Message:", message);
-                } else if (sensValue.equals("No Passage")) {
-                    message.setPayload(("Fenster wurde geschlossen / im Raum: " + sensRoom).getBytes());
-                    communication.publish(PUBLISH_TOPIC+ "/" + "Message:", message);
-                }
-                }
-            }
-            
-            if (sendedSensTyp.equals("Humidity")) {
-                if (!sensUID.equals(sendedUID) && !sensRoom.equals(sendedRoom)) {
+            // Person sitzt auf einem Stuhl
+            if (sendedSensTyp.equals("Load Cell")) {
+                if (!sensUID.equals(sendedUID)) {
+                    sensUID = sendedUID;
                     
+                    // Person sitzt auf Stuhl 1
+                    if (sensUID.equals("***1")){
+                        sensChairUIDgroup = sensUID;
+                        chair1Value = sensValue;
+                        chairRoom = sendedRoom;
+                    } 
+                    if (sensUID.equals("***2")){
+                        sensChairUIDgroup = sensChairUIDgroup + sensUID;
+                        chair2Value = sensValue;
+                    }
+                        if (sensChairUIDgroup.equals(chairUIDgroup1)){
+                            if(chair1Value.equals("sitzt") && chair2Value.equals("sitzt")){
+                                 message.setPayload(("Bewohner sitzt im Raum " + chairRoom).getBytes());
+                                 communication.publish(PUBLISH_TOPIC + "/" + "Message:", message);
+                            }
+                        }
                 }
             }
             
-            
-            
-        } 
+           
+            // Licht an/aus
+            if (sendedSensTyp.equals("Ambient Light")) {
+                if (!sensUID.equals(sendedUID)) {
+                    sensUID = sendedUID;
+                    System.out.println("Aktivity: Licht wurde " + sensValue + " / im Raum: " + sensRoom);
+                }
+            }
+
+            // CO2 Gehalt im Raum
+            if (sendedSensTyp.equals("CO2")) {
+                if (!sensUID.equals(sendedUID)) {
+                    sensUID = sendedUID;
+                    System.out.println("Co2 Gehalt: " + sensValue + " / im Raum: " + sensRoom);
+                }
+            }
+
+            // Fenster offen/geschlossen
+            if (sendedSensTyp.equals("Distance IR")) {
+                if (!sensUID.equals(sendedUID)) {
+                    sensUID = sendedUID;
+                    if (sensValue.equals("Passage Detected")) {
+                        message.setPayload(("Fenster wurde geöffnet / im Raum: " + sensRoom).getBytes());
+                        communication.publish(PUBLISH_TOPIC + "/" + "Message:", message);
+                    } else if (sensValue.equals("No Passage")) {
+                        message.setPayload(("Fenster wurde geschlossen / im Raum: " + sensRoom).getBytes());
+                        communication.publish(PUBLISH_TOPIC + "/" + "Message:", message);
+                    }
+                }
+            }
+
+            if (sendedSensTyp.equals("Humidity")) {
+                if (!sensUID.equals(sendedUID)) {
+
+                }
+            }
+
+        }
+        
+         // Person sitzt oder liegt auf dem Bett
+            if (string.endsWith("Belegt:")) {
+                sensValue = new String(mm.getPayload());
+                if (sensValue.equals("Ja")) {
+                    message.setPayload(("Bewohner liegt auf dem Bett").getBytes());
+                    communication.publish(PUBLISH_TOPIC + "/" + "Message:", message);   
+                }
+                if (sensValue.equals("Bewohner sitzt nur")){
+                    message.setPayload(("Bewohner sitzt auf dem Bett").getBytes());
+                    communication.publish(PUBLISH_TOPIC + "/" + "Message:", message);
+                }
+            }
+        
     }
 
     @Override
@@ -162,15 +211,20 @@ public class Activity implements MqttCallback {
         Activity service = new Activity();
 
         // Subscribe via Broker the LoadCell Sensor
-                service.communication.subscribe(SUBSCRIBE_SLC_VALUE, 0);
-                
-                // Subscribe via Broker the Ambiente Light Sensor
-                service.communication.subscribe(SUBSCRIBE_SAL_VALUE, 0);
-                
-                // Subscribe via Broker the SoundIntensity Sensor
-                service.communication.subscribe(SUBSCRIBE_SSI_VALUE, 0);
+        service.communication.subscribe(SUBSCRIBE_SLC4_VALUE, 0);
+        service.communication.subscribe(SUBSCRIBE_SLC5_VALUE, 0);
 
+        // Subscribe via Broker the Ambiente Light Sensor
+        service.communication.subscribe(SUBSCRIBE_SAL_VALUE, 0);
 
+        // Subscribe via Broker the SoundIntensity Sensor
+        service.communication.subscribe(SUBSCRIBE_SSI_VALUE, 0);
+
+        // Subscribe via Broker the Distance IR 5 Sensor
+        service.communication.subscribe(SUBSCRIBE_SDIR5_VALUE, 0);
+
+        // Subscribe via Broker the Humidity Sensor
+        service.communication.subscribe(SUBSCRIBE_SH_VALUE, 0);
     }
 
 }

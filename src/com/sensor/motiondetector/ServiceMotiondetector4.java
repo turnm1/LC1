@@ -24,7 +24,7 @@ import org.eclipse.paho.client.mqttv3.MqttMessage;
 public class ServiceMotiondetector4 implements MqttCallback{
 
     	private static final String UID = "qtu"; // Change to your UID
-        private static final String ROOM ="WC";
+        private static final String ROOM ="Kueche";
         
   public final static String BASE_SENSOR_ID = "Motion Detector";
         public final static String CLIENT_ID = BASE_SENSOR_ID+"/"+ROOM+"/"+UID;
@@ -97,7 +97,7 @@ public class ServiceMotiondetector4 implements MqttCallback{
         
                 IPConnection ipcon = new IPConnection();
                 HostConnection hc = new HostConnection();
-                String HOST = hc.getLocalhost();
+                String HOST = hc.getIPKueche();
                 int PORT = hc.getPort();     
                 ipcon.connect(HOST, PORT); // Connect to brickd
                 // Don't use device before ipcon is connected

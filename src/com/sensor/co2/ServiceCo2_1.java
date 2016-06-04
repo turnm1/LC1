@@ -23,8 +23,8 @@ import org.eclipse.paho.client.mqttv3.MqttMessage;
  */
 public class ServiceCo2_1 implements MqttCallback{
 
-        private static final String UID = "x71"; // Change to your UID
-        private final static String ROOM = "WC";
+        private static final String UID = "x7e"; // Change to your UID
+        private final static String ROOM = "Schlafzimmer";
         
         public final static String BASE_SENSOR_ID = "CO2";
         public final static String CLIENT_ID = BASE_SENSOR_ID+"/"+ROOM+"/"+UID;
@@ -96,7 +96,7 @@ public class ServiceCo2_1 implements MqttCallback{
                 
                 IPConnection ipcon = new IPConnection();
                 HostConnection hc = new HostConnection();
-                String HOST = hc.getLocalhost();
+                String HOST = hc.getIPSchlafzimmer();
                 int PORT = hc.getPort();     
                 ipcon.connect(HOST, PORT); // Connect to brickd
                 // Don't use device before ipcon is connected

@@ -25,8 +25,8 @@ public class ServiceAmbientLight5 implements MqttCallback{
 
     private final MQTTCommunication communication;   
     
-    private static final String UID = "yiz"; // Change to your UID
-    private final static String ROOM = "Küche";
+    private static final String UID = "yiz"; // DEMO schrank offen / geschlossen
+    private final static String ROOM = "Kuehlschrank";
  
     
         public final static String BASE_SENSOR_ID = "Ambient Light";

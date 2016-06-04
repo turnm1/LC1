@@ -17,10 +17,6 @@ import com.sensor.ambientlight.ServiceAmbientLight4;
 import com.sensor.ambientlight.ServiceAmbientLight5;
 import com.sensor.co2.ServiceCo2;
 import com.sensor.co2.ServiceCo2_1;
-import com.sensor.co2.ServiceCo2_2;
-import com.sensor.co2.ServiceCo2_3;
-import com.sensor.co2.ServiceCo2_4;
-import com.sensor.co2.ServiceCo2_5;
 import com.sensor.distanceIr.ServiceDistanceIr;
 import com.sensor.distanceIr.ServiceDistanceIr1;
 import com.sensor.distanceIr.ServiceDistanceIr2;
@@ -117,19 +113,15 @@ public class AgentService implements MqttCallback{
    // Load Cell
    private static ServiceLoadCell slc;
    private final static String SUBSCRIBE_SLC_VALUE = slc.getTopicValue();
-   private final static String SUBSCRIBE_SLC_DATE = slc.getTopicDate();
    private final static String SUBRSCRIB_SLC_STATUS = slc.getTopicStatus();
    private static ServiceLoadCell1 slc1;          // Sitzen oder Liegen
    private final static String SUBSCRIBE_SLC1_VALUE = slc1.getTopicValue();
-   private final static String SUBSCRIBE_SLC1_DATE = slc1.getTopicDate();
    private final static String SUBRSCRIB_SLC1_STATUS = slc1.getTopicStatus();
    private static ServiceLoadCell2 slc2;          // Sitzen oder Liegen
    private final static String SUBSCRIBE_SLC2_VALUE = slc2.getTopicValue();
-   private final static String SUBSCRIBE_SLC2_DATE = slc2.getTopicDate();
    private final static String SUBRSCRIB_SLC2_STATUS = slc2.getTopicStatus();
    private static ServiceLoadCell3 slc3;          // Sitzen oder Liegen
    private final static String SUBSCRIBE_SLC3_VALUE = slc3.getTopicValue();
-   private final static String SUBSCRIBE_SLC3_DATE = slc3.getTopicDate();
    private final static String SUBRSCRIB_SLC3_STATUS = slc3.getTopicStatus();
    
    // Laser Range Finder
@@ -172,18 +164,7 @@ public class AgentService implements MqttCallback{
    private static ServiceCo2_1 sco1;
    private final static String SUBSCRIBE_SCO1_VALUE = sco1.getTopicValue();
    private final static String SUBRSCRIB_SCO1_STATUS = sco1.getTopicStatus();
-   private static ServiceCo2_2 sco2;
-   private final static String SUBSCRIBE_SCO2_VALUE = sco2.getTopicValue();
-   private final static String SUBRSCRIB_SCO2_STATUS = sco2.getTopicStatus();
-   private static ServiceCo2_3 sco3;
-   private final static String SUBSCRIBE_SCO3_VALUE = sco3.getTopicValue();
-   private final static String SUBRSCRIB_SCO3_STATUS = sco3.getTopicStatus();
-   private static ServiceCo2_4 sco4;
-   private final static String SUBSCRIBE_SCO4_VALUE = sco4.getTopicValue();
-   private final static String SUBRSCRIB_SCO4_STATUS = sco4.getTopicStatus();
-   private static ServiceCo2_5 sco5;
-   private final static String SUBSCRIBE_SCO5_VALUE = sco5.getTopicValue();
-   private final static String SUBRSCRIB_SCO5_STATUS = sco5.getTopicStatus();
+
    
    // Ambiente Light
    private static ServiceAmbientLight sal;
@@ -392,18 +373,7 @@ public class AgentService implements MqttCallback{
                 // Subscribe via Broker the CO Sensor 1
                 service.communication.subscribe(SUBSCRIBE_SCO1_VALUE, 0);
                 service.communication.subscribe(SUBRSCRIB_SCO1_STATUS, 0);
-                // Subscribe via Broker the CO Sensor 2
-                service.communication.subscribe(SUBSCRIBE_SCO2_VALUE, 0);
-                service.communication.subscribe(SUBRSCRIB_SCO2_STATUS, 0);
-                // Subscribe via Broker the CO Sensor 3
-                service.communication.subscribe(SUBSCRIBE_SCO3_VALUE, 0);
-                service.communication.subscribe(SUBRSCRIB_SCO3_STATUS, 0);
-                // Subscribe via Broker the CO Sensor 4
-                service.communication.subscribe(SUBSCRIBE_SCO4_VALUE, 0);
-                service.communication.subscribe(SUBRSCRIB_SCO4_STATUS, 0);
-                // Subscribe via Broker the CO Sensor 5
-                service.communication.subscribe(SUBSCRIBE_SCO5_VALUE, 0);
-                service.communication.subscribe(SUBRSCRIB_SCO5_STATUS, 0);                  
+                           
    
     }
 }

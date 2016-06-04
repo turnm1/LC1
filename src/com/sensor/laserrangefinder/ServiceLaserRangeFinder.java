@@ -23,7 +23,7 @@ import org.eclipse.paho.client.mqttv3.MqttMessage;
  */
 public class ServiceLaserRangeFinder implements MqttCallback{
 
-    private static final String UID = "qt4"; // Change to your UID
+    private static final String UID = "vrM"; // Wohnzimmer: Richtung Eingang
     private static final String ROOM = "Zimmer2";
     
     public final static String BASE_SENSOR_ID = "Laser Range";
@@ -98,7 +98,7 @@ public class ServiceLaserRangeFinder implements MqttCallback{
         
                IPConnection ipcon = new IPConnection();
                 HostConnection hc = new HostConnection();
-                String HOST = hc.getHostIP();
+                String HOST = hc.getIPWohnzimmer();
                 int PORT = hc.getPort();     
                 ipcon.connect(HOST, PORT); // Connect to brickd
                 // Don't use device before ipcon is connected

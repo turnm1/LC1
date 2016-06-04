@@ -24,7 +24,7 @@ import org.eclipse.paho.client.mqttv3.MqttMessage;
 public class ServiceMotiondetector implements MqttCallback{
 
     	private static final String UID = "qtu"; // Change to your UID
-        private static final String ROOM ="WC";
+        private static final String ROOM ="Wohnungseingang";
         
   public final static String BASE_SENSOR_ID = "Motion Detector";
         public final static String CLIENT_ID = BASE_SENSOR_ID+"/"+ROOM+"/"+UID;

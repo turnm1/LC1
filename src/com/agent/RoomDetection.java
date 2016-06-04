@@ -116,6 +116,7 @@ public class RoomDetection implements MqttCallback {
         motionMessage.setRetained(true);
         motionMessage.setQos(0);
             
+        int count = 0;
             
         if (string.endsWith("Value:")) {
             String[] res = string.split("/", 4);
@@ -127,8 +128,8 @@ public class RoomDetection implements MqttCallback {
             String [] vd = valueDate.split("/",2);
             sensValue = vd[0];
 
-            if (sendedSensTyp.equals("Distanz IR")) {
-                if (!sensUID.equals(sendedUID) && !sensRoom.equals(sendedRoom)) {
+            if (sendedSensTyp.equals("Distance IR")) {
+                if (!sensUID.equals(sendedUID) && !sensRoom.equals(sendedRoom) && sensValue.equals("Passage Detected")) {
                     r.setNewUID(sendedUID);
                     r.setLastUID(sensUID);
                     messageRoomLeave.setPayload((sensRoom).getBytes());
@@ -143,6 +144,7 @@ public class RoomDetection implements MqttCallback {
                     messageRoomLocation.setPayload((r.getRoomLocation()).getBytes());
                     communication.publish(PUBLISH_TOPIC + "/" + "Room Location", messageRoomLocation);
                 } else if (r.getNewUID().equals(sendedUID) && sensValue.equals("Passage Detected")){
+                    
                     //r.setNewUID(r.getLastUID());
                     r.setNewUID(sensUID);
                     sensUID = r.getLastUID();
@@ -155,8 +157,19 @@ public class RoomDetection implements MqttCallback {
                     messageRoomLocation.setPayload((r.getLastRoom()).getBytes());
                     communication.publish(PUBLISH_TOPIC + "/" + "Room Location", messageRoomLocation);
                     r.setNewRoom(r.getLastRoom());
+                    
+//                }  else if (r.getRoomLocation().equals("Wohnungseingang") && sensValue.equals("Passage Detected")){
+//                    messageRoomLeave.setPayload((r.getRoomLocation()).getBytes());
+//                    communication.publish(PUBLISH_TOPIC + "/" + "Leave:", messageRoomLeave);
+//                    sensRoom = "leave Home";
+//                    messageRoomEntry.setPayload(sensRoom.getBytes());
+//                    communication.publish(PUBLISH_TOPIC + "/" + "Entry:", messageRoomEntry);
+//                    messageRoomLocation.setPayload(sensRoom.getBytes());
+//                    communication.publish(PUBLISH_TOPIC + "/" + "Room Location", messageRoomLocation);
                 }
             }
+
+           
 
             if (sendedSensTyp.equals("Motion Detector")) {
                

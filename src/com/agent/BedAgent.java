@@ -24,21 +24,17 @@ import org.eclipse.paho.client.mqttv3.MqttMessage;
 public class BedAgent implements MqttCallback {
 
     // Subscrib Pathways
-   private static ServiceLoadCell slc;          // Sitzen oder Liegen
+   private static ServiceLoadCell slc;       
    private final static String SUBSCRIBE_SLC_VALUE = slc.getTopicValue();
-   private final static String SUBSCRIBE_SLC_DATE = slc.getTopicDate();
 
-   private static ServiceLoadCell1 slc1;          // Sitzen oder Liegen
+   private static ServiceLoadCell1 slc1;          
    private final static String SUBSCRIBE_SLC1_VALUE = slc1.getTopicValue();
-   private final static String SUBSCRIBE_SLC1_DATE = slc1.getTopicDate();
    
-   private static ServiceLoadCell2 slc2;          // Sitzen oder Liegen
+   private static ServiceLoadCell2 slc2;          
    private final static String SUBSCRIBE_SLC2_VALUE = slc2.getTopicValue();
-   private final static String SUBSCRIBE_SLC2_DATE = slc2.getTopicDate();
    
-   private static ServiceLoadCell3 slc3;          // Sitzen oder Liegen
+   private static ServiceLoadCell3 slc3;          
    private final static String SUBSCRIBE_SLC3_VALUE = slc3.getTopicValue();
-   private final static String SUBSCRIBE_SLC3_DATE = slc3.getTopicDate();
    
   
     private static String sensTyp = "";
@@ -46,8 +42,22 @@ public class BedAgent implements MqttCallback {
     private static String sensRoom = "";
     private static String sensDate = "";
 
-    private static String sensValue = null;
+    private static int sensValue;
+    private static String sensText = null;
     private static String valueDate = "";
+    
+    private static int ValueLU;
+    private static String TextLU;
+    private static int ValueRU;
+    private static String TextRU;
+    private static int ValueLO;
+    private static String TextLO;
+    private static int ValueRO;
+    private static String TextRO;
+    
+    private static int LageLinks = 0;
+    private static int LageRechts = 0;
+    private static int LageUnten = 0;
 
     // Agent Pathways
     public final static String AGENT = "AGENT";
@@ -59,7 +69,7 @@ public class BedAgent implements MqttCallback {
     public final static String STATUS_CONNECTION_OFFLINE = "offline";
     public final static String STATUS_CONNECTION_ONLINE = "online";
 
-    public static String PUBLISH_TOPIC = "leer";
+    public static String PUBLISH_TOPIC = BASE_CONNECTION;
 
     private final MQTTCommunication communication;
 
@@ -82,10 +92,12 @@ public class BedAgent implements MqttCallback {
     }
 
     // Get the Topic Pathway for Agent
-    public static String getTopic() {
-        String value = BASE_CONNECTION + "/";
+    public static String getTopicValue() {
+        String value = BASE_CONNECTION + "/Belegt:";
         return value;
     }
+    
+    
 
     @Override
     public void connectionLost(Throwable thrwbl) {
@@ -107,15 +119,82 @@ public class BedAgent implements MqttCallback {
             String sendedUID = res[2];
 
             valueDate = new String(mm.getPayload());
-            String [] vd = valueDate.split("/",2);
-            sensValue = vd[0];
+            String [] vd = valueDate.split("/",3);
+            sensValue = Integer.valueOf(vd[0]);
+            sensText = vd[1];
+            System.out.println(sensValue + " und " + sensText + " CHECK, pls!");
 
-             if (sendedSensTyp.equals("Load Cell")) {
-                 if (!sensUID.equals(sendedUID) && !sensRoom.equals(sendedRoom)) {
-                 sensUID = sendedUID;
-                 sensRoom = sendedRoom;
-                 System.out.println("Aktivity: Bewohner liegt auf dem Bett,Stuhl,Sofa / im Raum: " + sensRoom);
+             if (sendedUID.equals("vdv")) {
+                 if (sensText.equals("liegt")) {
+                 ValueLU = sensValue;
+                 TextLU = sensText;
              }  }
+             if (sendedUID.equals("vcQ")) {
+                 if (sensText.equals("liegt")) {
+                 ValueRU = sensValue;
+                 TextRU = sensText;
+             }  }
+             if (sendedUID.equals("vcn")) {
+                 if (sensText.equals("liegt")) {
+                 ValueLO = sensValue;
+                 TextLO = sensText;
+             }  }
+             if (sendedUID.equals("vd5")) {
+                 if (sensText.equals("liegt")) {
+                 ValueRO = sensValue;
+                 TextRO = sensText;
+             }  }
+             
+             // Publish Belegung: Ja / Nein / Bewohner sitzt nur
+             if (TextLU.equals("liegt") | TextRU.equals("liegt") | TextLO.equals("liegt") | TextRO.equals("liegt")){
+                 message.setPayload("Bewohner sitzt nur".getBytes());
+                 communication.publish(PUBLISH_TOPIC +"/Belegt:", message);
+             } else if (TextLU.equals("liegt") | TextRU.equals("liegt") && TextLO.equals("liegt") && TextRO.equals("liegt")){
+                 message.setPayload("Ja".getBytes());
+                 communication.publish(PUBLISH_TOPIC +"/Belegt:", message);
+                 
+                 // Lage positionierung wenn Belegt ist
+                 if (ValueLU > ValueRU && ValueLU > ValueRO){
+                     LageLinks++;
+                 }
+                  if (ValueLO > ValueRU && ValueLO > ValueRO){
+                     LageLinks++;
+                 }
+                 
+                  if (ValueRO > ValueLU && ValueRO > ValueLO){
+                     LageRechts++;
+                 }
+                   if (ValueRU > ValueLU && ValueRU > ValueLO){
+                     LageRechts++;
+                 }
+                   
+                  if (ValueLU > ValueLO && ValueRU > ValueRO | ValueLU > ValueRO && ValueRU > ValueLO){
+                     LageUnten++;
+                 }
+                  
+                 if (LageLinks == 2){
+                    message.setPayload("Links".getBytes());
+                    communication.publish(PUBLISH_TOPIC +"/Lage:", message);
+                 } else if (LageRechts == 2){
+                    message.setPayload("Rechts".getBytes());
+                    communication.publish(PUBLISH_TOPIC +"/Lage:", message);
+                 } else if (LageUnten == 1){
+                    message.setPayload("Unten".getBytes());
+                    communication.publish(PUBLISH_TOPIC +"/Lage:", message);
+                 } else {
+                    message.setPayload("Mitte".getBytes());
+                    communication.publish(PUBLISH_TOPIC +"/Lage:", message);
+                 }
+                  
+                 
+             // Publish Belegung: Nein
+             } else {
+                 message.setPayload("Nein".getBytes());
+                 communication.publish(PUBLISH_TOPIC +"/Belegt:", message);
+                 LageLinks = 0;
+                 LageRechts = 0;
+                 LageUnten = 0;
+             }
         } 
     }
 
@@ -129,17 +208,13 @@ public class BedAgent implements MqttCallback {
 
         // Subscribe via Broker the LoadCell Sensor
                 service.communication.subscribe(SUBSCRIBE_SLC_VALUE, 0);
-                service.communication.subscribe(SUBSCRIBE_SLC_DATE, 0);
-                
+               
                 service.communication.subscribe(SUBSCRIBE_SLC1_VALUE, 0);
-                service.communication.subscribe(SUBSCRIBE_SLC1_DATE, 0);
-                
+               
                 service.communication.subscribe(SUBSCRIBE_SLC2_VALUE, 0);
-                service.communication.subscribe(SUBSCRIBE_SLC2_DATE, 0);
                 
                 service.communication.subscribe(SUBSCRIBE_SLC3_VALUE, 0);
-                service.communication.subscribe(SUBSCRIBE_SLC3_DATE, 0);
-              
+               
     }
 
 }

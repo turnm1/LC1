@@ -28,7 +28,7 @@ public class ServiceTemperatur1 implements MqttCallback{
     Pfad: Temperatur/qvy/status & value
     */
     private static final String UID = "qvy"; // Change to your UID
-    private static final String ROOM = "WC";
+    private static final String ROOM = "Badzimmer";
         
     public final static String BASE_SENSOR_ID = "Temperatur";
     public final static String CLIENT_ID = BASE_SENSOR_ID+"/"+ROOM+"/"+UID;
@@ -101,7 +101,7 @@ public class ServiceTemperatur1 implements MqttCallback{
                 
         IPConnection ipcon = new IPConnection();
                     HostConnection hc = new HostConnection();
-                    String HOST = hc.getLocalhost();
+                    String HOST = hc.getIPBad();
                     int PORT = hc.getPort();     
                     ipcon.connect(HOST, PORT); // Connect to brickd
                     // Don't use device before ipcon is connected
