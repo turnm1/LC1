@@ -11,9 +11,9 @@ package sms.send;
  */
 public class SmsConfig {
     
-    private long telenummer = 41788312364L;
+    private long telenummer = 41763070624L;
 //41763070624L;//41788312364L;
-    private String message = "Hallo mete, test sms";
+    private String message = "Es wurde eine unregelmässigkeit im Raum: Wohnungseingang in der Wohnung von Frau Brönnimann festgestellt, bitte erkundigen Sie sich, ob alle in Ordnung ist. Ihr INTRAAL Team";
 
     public long getTelenummer() {
         return telenummer;

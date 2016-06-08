@@ -118,14 +118,13 @@ public class AlarmPerMotion implements MqttCallback {
                 
                 try {
                     SmsConfig sc = new SmsConfig();
-                    DefaultSmsClient smsClient = new DefaultSmsClient("turnamete@hotmail.com", "Mete08aal08", "https://api.websms.com");
+                    DefaultSmsClient smsClient = new DefaultSmsClient("m.demon@gmx.ch", "mete2016aal", "https://api.websms.com");
 
                     long[] recipients = new long[]{sc.getTelenummer()};
-                    sc.setMessage(text);
-                    String messageContent = sc.getMessage();
+                    String messageContent = "***ALARM*** "+text;
                     TextMessage textMessage = new TextMessage(recipients, messageContent);
 
-                    int maxSmsPerMessage = 1;
+                    int maxSmsPerMessage = 2;
                     boolean test = false;
 
                     int statuscode = smsClient.send(textMessage, maxSmsPerMessage, test);
