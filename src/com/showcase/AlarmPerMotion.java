@@ -12,6 +12,7 @@ import com.communication.MQTTParameters;
 import com.sensor.motiondetector.ServiceMotiondetector;
 import java.net.URI;
 import mail.send.MailConfig;
+import mail.send.MailConfigMete;
 import mail.send.SendMail;
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
 import org.eclipse.paho.client.mqttv3.MqttCallback;
@@ -29,8 +30,8 @@ public class AlarmPerMotion implements MqttCallback {
     // Subscrib Pathways
     private static ServiceMotiondetector smd;
     private final static String SUBSCRIBE_SMD_VALUE = smd.getTopicValue();
-   private final static String SUBRSCRIB_SMD_STATUS = smd.getTopicStatus();
-   
+    private final static String SUBRSCRIB_SMD_STATUS = smd.getTopicStatus();
+
 
     /*
    Es fehlt noch die Aktivity Strom ein/aus (zum Stom, kann man eindeutige Geräte anschliessen), Fenster auf/zu
@@ -102,32 +103,39 @@ public class AlarmPerMotion implements MqttCallback {
             valueDate = new String(mm.getPayload());
             String[] vd = valueDate.split("/", 2);
             sensValue = vd[0];
-            String text = "Es wurde eine unregelmässigkeit im Raum: "+sendedRoom+" in der Wohnung von Frau Brönnimann festgestellt, bitte erkundigen Sie sich, ob alle in Ordnung ist. Ihr INTRAAL Team";
-            MailConfig mail = new MailConfig();
-            mail.setText(text);
-           
-            new SendMail().sendMail(mail.getSmtpHost(), mail.getUsername(), mail.getPassword(), mail.getSenderAddress(), mail.getRecipientsAddress(), mail.getSubject(), mail.getText());
-            SmsConfig sc = new SmsConfig();
-            System.out.println("Sending Mail");
-            try {
-                DefaultSmsClient smsClient = new DefaultSmsClient("turnamete@hotmail.com", "Mete08aal08", "https://api.websms.com");
 
-                long[] recipients = new long[]{sc.getTelenummer()};
-                sc.setMessage(text);
-                String messageContent = sc.getMessage();
-                TextMessage textMessage = new TextMessage(recipients, messageContent);
+            if (sensValue.equals("Motion Detected")) {
+                String text = "Es wurde eine unregelmässigkeit im Raum: " + sendedRoom + " in der Wohnung von Frau Brönnimann festgestellt, bitte erkundigen Sie sich, ob alle in Ordnung ist. Ihr INTRAAL Team";
+                MailConfig mail = new MailConfig();
+                mail.setText(text);
+                new SendMail().sendMail(mail.getSmtpHost(), mail.getUsername(), mail.getPassword(), mail.getSenderAddress(), mail.getRecipientsAddress(), mail.getSubject(), mail.getText());
+                
+                MailConfigMete mail2 = new MailConfigMete();
+                mail2.setText(text);
+                new SendMail().sendMail(mail2.getSmtpHost(), mail2.getUsername(), mail2.getPassword(), mail2.getSenderAddress(), mail2.getRecipientsAddress(), mail2.getSubject(), mail2.getText());
+                
+                System.out.println("Sending Mail");
+                
+                try {
+                    SmsConfig sc = new SmsConfig();
+                    DefaultSmsClient smsClient = new DefaultSmsClient("turnamete@hotmail.com", "Mete08aal08", "https://api.websms.com");
 
-                int maxSmsPerMessage = 1;
-                boolean test = false;
+                    long[] recipients = new long[]{sc.getTelenummer()};
+                    sc.setMessage(text);
+                    String messageContent = sc.getMessage();
+                    TextMessage textMessage = new TextMessage(recipients, messageContent);
 
-                int statuscode = smsClient.send(textMessage, maxSmsPerMessage, test);
-                if (statuscode == 2000) {
-                    System.out.println("Sending SMS successfully tested");
+                    int maxSmsPerMessage = 1;
+                    boolean test = false;
+
+                    int statuscode = smsClient.send(textMessage, maxSmsPerMessage, test);
+                    if (statuscode == 2000) {
+                        System.out.println("Sending SMS successfully tested");
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
-            } catch (Exception e) {
-                e.printStackTrace();
             }
-
         }
     }
 
@@ -140,8 +148,8 @@ public class AlarmPerMotion implements MqttCallback {
         AlarmPerMotion service = new AlarmPerMotion();
 
         // Subscribe via Broker the Motion Sensor
-                service.communication.subscribe(SUBSCRIBE_SMD_VALUE, 0);
-                service.communication.subscribe(SUBRSCRIB_SMD_STATUS, 0);
+        service.communication.subscribe(SUBSCRIBE_SMD_VALUE, 0);
+        service.communication.subscribe(SUBRSCRIB_SMD_STATUS, 0);
 
     }
 

@@ -9,20 +9,21 @@ package mail.send;
  *
  * @author Turna
  */
-public class MailConfig {
+public class MailConfigMete {
     
-    public MailConfig(){
+    public MailConfigMete(){
         
     }
     
     private String username = "info@meteturna.ch";
     private String password = "Mete08aal08";
     private String senderAddress ="info@meteturna.ch";//someone@web.de
-    private String recipientsAddress = "carole.kaiser@sunrise.ch"; //somereceiver@web.de
+    private String recipientsAddress = "turnamete@hotmail.com"; //somereceiver@web.de
     private String subject = "Intaal Alarm";
     private String text = "Beispiel Text";
     private String smtpHost = "asmtp.mail.hostpoint.ch";
     private String smptAuth = "mail.smtp.auth";
+
     
 
     public String getUsername() {

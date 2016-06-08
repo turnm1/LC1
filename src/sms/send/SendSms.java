@@ -19,7 +19,7 @@ public class SendSms {
 
     public void send() {
  try {
- DefaultSmsClient smsClient = new DefaultSmsClient("turnamete@hotmail.com", "Mete08aal08", "https://api.websms.com");
+ DefaultSmsClient smsClient = new DefaultSmsClient("m.demon@gmx.ch", "mete2016aal", "https://api.websms.com");
  
  long[] recipients = new long[] {sc.getTelenummer()};
  

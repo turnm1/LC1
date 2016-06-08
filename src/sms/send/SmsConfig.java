@@ -12,6 +12,7 @@ package sms.send;
 public class SmsConfig {
     
     private long telenummer = 41788312364L;
+//41763070624L;//41788312364L;
     private String message = "Hallo mete, test sms";
 
     public long getTelenummer() {
