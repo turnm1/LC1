@@ -23,7 +23,7 @@ import org.eclipse.paho.client.mqttv3.MqttMessage;
  */
 public class ServiceDistanceIr2 implements MqttCallback{
 
-    private static final String UID = "tJo"; // Change to your UID   
+    private static final String UID = "tJ9"; // Change to your UID   
     private static final String ROOM = "Wohnzimmer";
     
      public final static String BASE_SENSOR_ID = "Distance IR";
@@ -97,7 +97,7 @@ public class ServiceDistanceIr2 implements MqttCallback{
         
                 IPConnection ipcon = new IPConnection();
                 HostConnection hc = new HostConnection();
-                String HOST = hc.getIPWohnzimmer();
+                String HOST = hc.getIPEingangIR();
                 int PORT = hc.getPort();     
                 ipcon.connect(HOST, PORT); // Connect to brickd
                 // Don't use device before ipcon is connected

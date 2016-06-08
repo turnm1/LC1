@@ -103,7 +103,7 @@ public class ServiceAmbientLight2 implements MqttCallback{
                           
                 IPConnection ipcon = new IPConnection();
                 HostConnection hc = new HostConnection();
-                String HOST = hc.getIPWohnzimmer();
+                String HOST = hc.getIPEingangIR();
                 int PORT = hc.getPort();     
                 ipcon.connect(HOST, PORT); // Connect to brickd
                 // Don't use device before ipcon is connected

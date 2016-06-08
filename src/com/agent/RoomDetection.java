@@ -9,10 +9,17 @@ import com.communication.MQTTParameters;
 import com.helpers.Room;
 import com.sensor.distanceIr.ServiceDistanceIr;
 import com.sensor.distanceIr.ServiceDistanceIr1;
+import com.sensor.distanceIr.ServiceDistanceIr2;
+import com.sensor.distanceIr.ServiceDistanceIr3;
+import com.sensor.distanceIr.ServiceDistanceIr4;
 import com.sensor.distanceIr.ServiceDistanceIr5;
 import com.sensor.laserrangefinder.ServiceLaserRangeFinder;
 import com.sensor.motiondetector.ServiceMotiondetector;
 import com.sensor.motiondetector.ServiceMotiondetector1;
+import com.sensor.motiondetector.ServiceMotiondetector2;
+import com.sensor.motiondetector.ServiceMotiondetector3;
+import com.sensor.motiondetector.ServiceMotiondetector4;
+import com.sensor.motiondetector.ServiceMotiondetector5;
 
 import java.net.URI;
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
@@ -29,20 +36,34 @@ public class RoomDetection implements MqttCallback {
     // Subscrib Pathways
     private static ServiceMotiondetector smd;
     private final static String SUBSCRIBE_SMD_VALUE = smd.getTopicValue();
-
     private static ServiceMotiondetector1 smd1;
     private final static String SUBSCRIBE_SMD1_VALUE = smd1.getTopicValue();
+    private static ServiceMotiondetector2 smd2;
+    private final static String SUBSCRIBE_SMD2_VALUE = smd2.getTopicValue();
+    private static ServiceMotiondetector3 smd3;
+    private final static String SUBSCRIBE_SMD3_VALUE = smd3.getTopicValue();
+    private static ServiceMotiondetector4 smd4;
+    private final static String SUBSCRIBE_SMD4_VALUE = smd4.getTopicValue();
+    private static ServiceMotiondetector5 smd5;
+    private final static String SUBSCRIBE_SMD5_VALUE = smd5.getTopicValue();
 
     private static ServiceLaserRangeFinder srf;
     private final static String SUBSCRIBE_SRF_VALUE = srf.getTopicValue();
 
     private static ServiceDistanceIr sdir;
     private final static String SUBSCRIBE_SDIR_VALUE = sdir.getTopicValue();
+    private static ServiceDistanceIr1 sdir1;
+    private final static String SUBSCRIBE_SDIR1_VALUE = sdir1.getTopicValue();
+    private static ServiceDistanceIr2 sdir2;
+    private final static String SUBSCRIBE_SDIR2_VALUE = sdir2.getTopicValue();
+    private static ServiceDistanceIr3 sdir3;
+    private final static String SUBSCRIBE_SDIR3_VALUE = sdir3.getTopicValue();
+    private static ServiceDistanceIr4 sdir4;
+    private final static String SUBSCRIBE_SDIR4_VALUE = sdir4.getTopicValue();
     private static ServiceDistanceIr5 sdir5;
     private final static String SUBSCRIBE_SDIR5_VALUE = sdir5.getTopicValue();
 
-    private static ServiceDistanceIr1 sdir1;
-    private final static String SUBSCRIBE_SDIR1_VALUE = sdir1.getTopicValue();
+   
 
 
     Room r = new Room();
@@ -217,9 +238,12 @@ public class RoomDetection implements MqttCallback {
 
         // Subscribe via Broker the Distance IR Sensor
         service.communication.subscribe(SUBSCRIBE_SDIR_VALUE, 0);
-        service.communication.subscribe(SUBSCRIBE_SDIR5_VALUE, 0);
-
         service.communication.subscribe(SUBSCRIBE_SDIR1_VALUE, 0);
+        service.communication.subscribe(SUBSCRIBE_SDIR2_VALUE, 0);
+        service.communication.subscribe(SUBSCRIBE_SDIR3_VALUE, 0);
+        service.communication.subscribe(SUBSCRIBE_SDIR4_VALUE, 0);
+        service.communication.subscribe(SUBSCRIBE_SDIR5_VALUE, 0);
+        
 
         // Subscribe via Broker the Laser Range Finder Sensor
         service.communication.subscribe(SUBSCRIBE_SRF_VALUE, 0);

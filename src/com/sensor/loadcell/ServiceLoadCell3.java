@@ -24,7 +24,7 @@ import org.eclipse.paho.client.mqttv3.MqttMessage;
  */
 public class ServiceLoadCell3 implements MqttCallback{
   
-    private static final String UID = "vd5"; // Rechts oben
+    private static final String UID = "vdT"; // Rechts oben
     private static final String ROOM = "Schlafzimmer";
     
     public final static String BASE_SENSOR_ID = "Load Cell";
@@ -95,7 +95,7 @@ public class ServiceLoadCell3 implements MqttCallback{
         
               IPConnection ipcon = new IPConnection();
                 HostConnection hc = new HostConnection();
-                String HOST = hc.getIPSchlafzimmer_Bett();
+                String HOST = hc.getLocalhost();
                 int PORT = hc.getPort();     
                 ipcon.connect(HOST, PORT); // Connect to brickd
                 // Don't use device before ipcon is connected
@@ -103,8 +103,8 @@ public class ServiceLoadCell3 implements MqttCallback{
 		BrickletLoadCell lc = new BrickletLoadCell(UID, ipcon); // Create device object
 
 
-		// Get threshold callbacks with a debounce time of 1 second (1000ms)
-		lc.setDebouncePeriod(1000);
+		// Get threshold callbacks with a debounce time of 1 second (1000ms) = 30sek
+		lc.setDebouncePeriod(30000);
 
 		// Add weight reached listener (parameter has unit g)
 		lc.addWeightReachedListener(new BrickletLoadCell.WeightReachedListener() {
