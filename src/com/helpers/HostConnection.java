@@ -12,12 +12,13 @@ package com.helpers;
 public class HostConnection {
    
    private static String MeteHome = "192.168.1.16";    //Mete
-   private static String IPEingang = "";
-   private static String IPKueche = "";
-   private static String IPBad = "";
-   private static String IPSchlafzimmer = "10.0.233.153";
-   private static String IPSchlafzimmer_Bett = "10.0.233.155";
-   private static String IPWohnzimmer = "10.0.233.156";
+   private static String IPEingang = "10.0.233.43";
+   private static String IPKueche = "10.0.233.44";
+   private static String IPBad = "10.0.233.45";
+   private static String IPSchlafzimmer = "10.0.233.47";
+   private static String IPSchlafzimmer_Bett = "10.0.233.48";
+   private static String IPWohnzimmer = "10.0.233.46";
+   private static String IPEingangIR = "10.0.233.49";//eigentlich 49
    private static String HostIPLocalhost = "localhost";
    private static int Port = 4223;
    
@@ -35,6 +36,9 @@ public class HostConnection {
    
     public String getIPWohnzimmer(){
         return IPWohnzimmer;
+    }
+     public String getIPEingangIR(){
+        return IPEingangIR;
     }
     
     public String getIPSchlafzimmer(){
