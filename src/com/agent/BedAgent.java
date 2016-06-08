@@ -139,7 +139,7 @@ public class BedAgent implements MqttCallback {
                  ValueLO = sensValue;
                  TextLO = sensText;
              }  }
-             if (sendedUID.equals("vd5")) {
+             if (sendedUID.equals("vdT")) {
                  if (sensText.equals("liegt")) {
                  ValueRO = sensValue;
                  TextRO = sensText;
